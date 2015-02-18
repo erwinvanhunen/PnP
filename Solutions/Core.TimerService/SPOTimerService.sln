@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPOTimerService", "SPOTimerService.csproj", "{293C0300-C4DC-4266-B0A4-EA3B656B1E19}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Files", "Files", "{B2658CB6-D533-4E01-8589-57B828DDA1FD}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\ProgramData\OfficeDevPnP\jobs.xml = ..\..\..\ProgramData\OfficeDevPnP\jobs.xml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{BE3C3329-3A2E-402D-90A7-3AB2365E7FD4}"
+	ProjectSection(SolutionItems) = preProject
+		readme.md = readme.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{293C0300-C4DC-4266-B0A4-EA3B656B1E19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{293C0300-C4DC-4266-B0A4-EA3B656B1E19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{293C0300-C4DC-4266-B0A4-EA3B656B1E19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{293C0300-C4DC-4266-B0A4-EA3B656B1E19}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
