@@ -25,7 +25,7 @@ namespace OfficeDevPnP.Core.Framework.TimerJobs
     /// Abstract base class for creating timer jobs (background processes) that operate against SharePoint sites. These timer jobs 
     /// are designed to use the CSOM API and thus can run on any server that can communicate with SharePoint.
     /// </summary>
-    public abstract class TimerJob
+    public abstract class TimerJob : MarshalByRefObject
     {
         #region Private Variables
         // Timerjob information
