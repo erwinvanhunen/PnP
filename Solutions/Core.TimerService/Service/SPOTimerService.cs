@@ -6,8 +6,10 @@ using System.ServiceProcess;
 using System.Threading;
 using System.Timers;
 using System.Xml.Linq;
+using System.Xml.Schema;
 using OfficeDevPnP.Core.Framework.TimerJobs.Enums;
 using OfficeDevPnP.Core.Utilities;
+using OfficeDevPnP.TimerService.Enums;
 using Timer = System.Timers.Timer;
 
 namespace OfficeDevPnP.TimerService
@@ -31,7 +33,7 @@ namespace OfficeDevPnP.TimerService
 
         protected override void OnStart(string[] args)
         {
-            Log.Info(ApplicationStrings.ServiceIndentifier, "Starting service");
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StartingService);
 
             if (!Directory.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "OfficeDevPnP")))
             {
@@ -43,6 +45,28 @@ namespace OfficeDevPnP.TimerService
                 XDocument config = new XDocument();
                 config.Add(new XElement("Jobs"));
                 config.Save(_configFile);
+            }
+            else
+            {
+                // Clear the IsRunning status if present on a job.
+                _config = XDocument.Load(_configFile);
+         
+                var jobs = _config.Descendants("Jobs").Descendants("Job");
+                bool dirty = false;
+                foreach (var job in jobs)
+                {
+                    var isRunning = job.Attribute("IsRunning") != null;
+                    if (isRunning)
+                    {
+                        dirty = true;
+                        job.Attribute("IsRunning").Remove();
+                    }
+                }
+                if (dirty)
+                {
+                    _config.Save(_configFile);
+                }
+
             }
 
             //ParseJobConfig();
@@ -70,66 +94,72 @@ namespace OfficeDevPnP.TimerService
 
             _config = XDocument.Load(_configFile);
 
-            var jobs = _config.Descendants("Jobs").Descendants("Job");
-            foreach (var job in jobs)
-            {
-                var jobDisabled = job.Attribute("Disabled") != null ? bool.Parse(job.Attribute("Disabled").Value) : false;
 
-                var isRunning = job.Attribute("IsRunning") != null;
-                if (!isRunning && !jobDisabled)
+            var jobs = _config.Descendants("Jobs").Descendants("Job");
+            if (jobs.Any())
+            {
+                Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.EnumeratingJobs);
+                foreach (var job in jobs)
                 {
-                    // Check if ID set, if not, add ID
-                    var jobId = job.Attribute("Id") != null ? job.Attribute("Id").Value : null;
-                    if (jobId == null)
+                    var jobDisabled = job.Attribute("Disabled") != null ? bool.Parse(job.Attribute("Disabled").Value) : false;
+
+                    var isRunning = job.Attribute("IsRunning") != null;
+                    if (!isRunning && !jobDisabled)
                     {
-                        job.SetAttributeValue("Id", Guid.NewGuid());
-                    }
-                    var scheduleType = job.Attribute("ScheduleType").Value;
-                    var lastRun = job.Descendants("LastRun").FirstOrDefault();
-                    switch (scheduleType.ToLower())
-                    {
-                        case "minute":
-                            {
-                                ParseMinuteJob(job, lastRun);
-                                break;
-                            }
-                        case "daily":
-                            {
-                                ParseDailyJob(job);
-                                break;
-                            }
-                        case "weekly":
-                            {
-                                ParseWeeklyJob(job);
-                                break;
-                            }
+                        // Check if ID set, if not, add ID
+                        var jobId = job.Attribute("Id") != null ? job.Attribute("Id").Value : null;
+                        if (jobId == null)
+                        {
+                            job.SetAttributeValue("Id", Guid.NewGuid());
+                        }
+                        var scheduleType = (ScheduleType)Enum.Parse(typeof(ScheduleType), job.Attribute("ScheduleType").Value);
+                        var lastRun = job.Descendants("LastRun").FirstOrDefault();
+                        switch (scheduleType)
+                        {
+                            case ScheduleType.Minute:
+                                {
+                                    ParseMinuteJob(job, lastRun);
+                                    break;
+                                }
+                            case ScheduleType.Daily:
+                                {
+                                    ParseDailyJob(job);
+                                    break;
+                                }
+                            case ScheduleType.Weekly:
+                                {
+                                    ParseWeeklyJob(job);
+                                    break;
+                                }
+                        }
                     }
                 }
-            }
 
-            var jobBeginningDelegate = new OnJobBeginningDelegate(OnTaskBeginning);
-            var jobFinishedCallback = new OnJobCompleteDelegate(OnTaskComplete);
+                var jobBeginningDelegate = new OnJobBeginningDelegate(OnTaskBeginning);
+                var jobFinishedCallback = new OnJobCompleteDelegate(OnTaskComplete);
 
 
-            foreach (var jobRunner in _jobQueue)
-            {
-                var runner = jobRunner;
-                ThreadPool.QueueUserWorkItem(o =>
+                foreach (var jobRunner in _jobQueue)
                 {
-                    jobBeginningDelegate(runner);
-
-                    runner.RunJob();
-                    if (runner.Exception != null)
+                    var runner = jobRunner;
+                    ThreadPool.QueueUserWorkItem(o =>
                     {
-                        Log.Error("SPOTIMERSERVICE", runner.Exception.Message);
-                    }
-                    jobFinishedCallback(runner);
-                });
+                        jobBeginningDelegate(runner);
+
+                        runner.RunJob();
+                        if (runner.Exception != null)
+                        {
+                            Log.Error("SPOTIMERSERVICE", runner.Exception.Message);
+                        }
+                        jobFinishedCallback(runner);
+                    });
+                }
             }
         }
 
         public void OnTaskBeginning(JobRunner jobRunner)
         {
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StartingJob0_1, jobRunner.Name, jobRunner.Id);
             var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id);
 
             if (jobElement != null)
@@ -175,7 +205,7 @@ namespace OfficeDevPnP.TimerService
                     _config.Save(_configFile);
                 }
             }
-
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.FinishedJob0_1, jobRunner.Name, jobRunner.Id);
         }
 
         private void ParseWeeklyJob(XElement job)
@@ -310,7 +340,7 @@ namespace OfficeDevPnP.TimerService
         }
         protected override void OnStop()
         {
-            Log.Info(ApplicationStrings.ServiceIndentifier, "Stopping service");
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StoppingService);
         }
     }
 }

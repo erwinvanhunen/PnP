@@ -61,11 +61,56 @@ namespace OfficeDevPnP.TimerService {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enumerating Jobs.
+        /// </summary>
+        internal static string EnumeratingJobs {
+            get {
+                return ResourceManager.GetString("EnumeratingJobs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Finished Job &quot;{0}&quot; ({1}).
+        /// </summary>
+        internal static string FinishedJob0_1 {
+            get {
+                return ResourceManager.GetString("FinishedJob0_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SPOTIMERSERVICE.
         /// </summary>
         internal static string ServiceIndentifier {
             get {
                 return ResourceManager.GetString("ServiceIndentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Starting Job &quot;{0}&quot;({1}).
+        /// </summary>
+        internal static string StartingJob0_1 {
+            get {
+                return ResourceManager.GetString("StartingJob0_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Starting service.
+        /// </summary>
+        internal static string StartingService {
+            get {
+                return ResourceManager.GetString("StartingService", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Starting service.
+        /// </summary>
+        internal static string StoppingService {
+            get {
+                return ResourceManager.GetString("StoppingService", resourceCulture);
             }
         }
     }
