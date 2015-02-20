@@ -328,7 +328,7 @@
     <value>Timer job authentication set to type Office 365 with user {0}</value>
   </data>
   <data name="TimerJob_Authentication_RetrieveFromCredMan" xml:space="preserve">
-    <value>Retrieving credetials with name {0} from the Windows Credential Manager</value>
+    <value>Retrieving credentials with name {0} from the Windows Credential Manager</value>
   </data>
   <data name="TimerJob_Authentication_RetrieveFromCredManFailed" xml:space="preserve">
     <value>Failed to retrieve credential manager credentials with name {0} or retrieved credentials don't have user or password set</value>
