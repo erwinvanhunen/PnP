@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?if $(var.Service.Configuration) = Release OR $(var.Service.Configuration) = Debug ?>
+<?define AssemblyVersion = "16.0.0.0" ?>
+<?define ProductName = "Office 365 Developer PnP PowerShell Commands" ?>
+<?else ?>
+<?define AssemblyVersion = "15.0.0.0" ?>
+<?define ProductName = "Office 365 Developer PnP PowerShell Commands (On-Premises)" ?>
+<?endif ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     >
+  <Product Id="*" Name="OfficeDev PnP Timer Service" Language="1033" Version="1.0.0.0" Manufacturer="OfficeDev PnP" UpgradeCode="6EE869E7-FDBA-4561-9D3D-27C7027A19C4">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate  EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="OfficeDev PnP Timer Service" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+    <PropertyRef Id="NETFRAMEWORK45"/>
+    <Condition Message="This application requires .NET Framework 4.0. Please install the .NET Framework then run this installer again.">
+      <![CDATA[Installed OR NETFRAMEWORK45]]>
+    </Condition>
+
+    <Binary Id="WarningIcon" SourceFile="warningicon20x18.png"/>
+
+    <UI Id="ServiceAccount">
+
+    </UI>
+
+    <Property Id="CLIENTASSEMBLIES">
+      <DirectorySearch Id="Client" Path="[WindowsFolder]Microsoft.NET\assembly\GAC_MSIL" Depth="2">
+        <FileSearch Name="Microsoft.SharePoint.Client.dll" MinVersion="$(var.AssemblyVersion)"/>
+      </DirectorySearch>
+    </Property>
+
+    <UI Id="CheckClientSDK">
+      <Dialog Id="CheckClientSDKDlg" Width="260" Height="100" Title="SharePoint Online Client Components SDK" NoMinimize="yes" >
+
+        <Control Id="Message" Type="Text" X="10" Y="10" Width="240" Height="30" Text="SharePoint Online Client Components SDK version 16 or newer is required. Please download and install, then run this installer again." />
+
+        <Control Id="Link" Type="Hyperlink" X="10" Y="40" Height="40" Width="240">
+          <Text>
+            <![CDATA[<a href="http://www.microsoft.com/en-us/download/details.aspx?id=42038">Download the SharePoint Online Client Components SDK</a>]]>
+          </Text>
+        </Control>
+
+        <Control Id="Return" Type="PushButton" X="110" Y="72" Width="70" Height="17" Default="yes" Cancel="yes" Text="&amp;Cancel install">
+          <Publish Event="EndDialog" Value="Exit">1</Publish>
+        </Control>
+
+      </Dialog>
+
+      <TextStyle Id="DlgTitle" FaceName="Tahoma" Size="9" Bold="yes" />
+
+      <Dialog Id="ServiceAccountDlg" Width="370" Height="270" Title="[ProductName] Setup">
+        <!--<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />-->
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Condition Action="disable"><![CDATA[ACCOUNT = "" OR PASSWORD = ""]]></Condition>
+          <Condition Action="enable">ACCOUNT &lt;&gt; "" AND PASSWORD &lt;&gt; ""</Condition>
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="Enter service account details.">
+        </Control>
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{DlgTitle}Service account" />
+        <Control Type="Text" Width="322" Height="26" X="25" Y="56" Id="BodyLabel" Text="Specify the logon account for the [ProductName] service." NoPrefix="yes">
+        </Control>
+        <Control Type="Text" Width="275" Height="10" X="25" Y="98" Id="AccountLabel" Text="&amp;Account name (Example: domain\\user or user@domain):" />
+        <Control Type="Edit" Width="194" Height="15" X="25" Y="111" Id="AccountTextbox" Property="ACCOUNT" />
+        <Control Type="Text" Width="275" Height="10" X="25" Y="135" Id="PasswordLabel" Text="Pa&amp;ssword:" />
+        <Control Type="Edit" Width="194" Height="15" X="25" Y="148" Id="PasswordTextbox" Property="PASSWORD" Password="yes" />
+
+        <Control Width="20" Height="18" FixedSize="yes" Type="Bitmap" X="25" Y="170" Id="Warning" Text="WarningIcon"/>
+        <Control Id="WarningLabel" Type="Text" X="40" Y="170" Width="200" Height="40" Text="The account entered here will not be validated. Make sure that the account details entered are correct." />
+      </Dialog>
+
+      <InstallUISequence>
+        <Show Dialog="CheckClientSDKDlg" Before="WelcomeEulaDlg" >
+          <![CDATA[NOT (Installed OR CLIENTASSEMBLIES)]]>
+        </Show>
+        <Show Dialog="ServiceAccountDlg" After="WelcomeEulaDlg"></Show>
+      </InstallUISequence>
+    </UI>
+  </Product>
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="APPFOLDER" Name="OfficeDevPnP">
+          <Directory Id="INSTALLFOLDER" Name="Timerservice" />
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="Apache License Version 2.rtf" />
+    <WixVariable Id="WixUIDialogBmp" Value="officedevpnp.png"/>
+    <UIRef Id="WixUI_Minimal" />
+
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="ServiceEXE" Guid="ee934ac8-fca6-42b0-8203-69ce050c1c06">
+        <File Id="Core" Source="$(var.OfficeDevPnP.Core.TargetPath)"/>
+        <File Id='TimerServiceEXE' Name='OfficeDevPnP.TimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\OfficeDevPnP.TimerService.exe'  KeyPath='yes'/>
+        <ServiceInstall Id="ServiceInstaller"
+                        Type="ownProcess"
+                        Name="OfficeDev PnP Timer Service"
+                        DisplayName="OfficeDev PnP Timer Service"
+                        Description="Timer Service for PnP Timer Jobs"
+                        Start="auto"
+                        Account="[ACCOUNT]"
+                        Password="[PASSWORD]"
+                        ErrorControl="normal" />
+        <!-- <ServiceControl Id="StartService" Start="install" Stop="both" Remove="uninstall" Name="OfficeDevPnP.TimerService.exe" Wait="yes" /> -->
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
