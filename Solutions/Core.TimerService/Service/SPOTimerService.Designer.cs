@@ -1,4 +1,4 @@
-﻿namespace SPOTimerService
+﻿namespace OfficeDevPnP.TimerService
 {
     partial class SPOTimerService
     {

@@ -5,7 +5,7 @@ using OfficeDevPnP.Core.Framework.TimerJobs;
 using OfficeDevPnP.Core.Framework.TimerJobs.Enums;
 using OfficeDevPnP.Core.Utilities;
 
-namespace SPOTimerService
+namespace OfficeDevPnP.TimerService
 {
     public class JobRunner
     {

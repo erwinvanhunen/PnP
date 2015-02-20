@@ -10,7 +10,7 @@ using OfficeDevPnP.Core.Framework.TimerJobs.Enums;
 using OfficeDevPnP.Core.Utilities;
 using Timer = System.Timers.Timer;
 
-namespace SPOTimerService
+namespace OfficeDevPnP.TimerService
 {
     public partial class SPOTimerService : ServiceBase
     {

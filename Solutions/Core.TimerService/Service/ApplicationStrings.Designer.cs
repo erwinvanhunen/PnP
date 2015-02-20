@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SPOTimerService {
+namespace OfficeDevPnP.TimerService {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace SPOTimerService {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SPOTimerService.ApplicationStrings", typeof(ApplicationStrings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("OfficeDevPnP.TimerService.ApplicationStrings", typeof(ApplicationStrings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
