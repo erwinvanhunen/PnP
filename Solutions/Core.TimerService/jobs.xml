@@ -5,7 +5,7 @@
     <!-- The authentication tag below specifies that you want to authenticate against Office 365, and that the credentials you use can be found in the Windows Credential Manager.
     Make sure that the account you use has log on as service rights _and_ that the credential has been created in the credential manager for that account. See readme.md for more information
     on how to create the credential. -->
-    <Authentication Type="Office365" Credential="TestCredential" />
+    <Authentication Type="AppOnly" Credential="TestCredential" />
     <Sites>
       <Site Url="https://tenant.sharepoint.com/sites/test1" />
       <Site Url="https://tenant.sharepoint.com/sites/test2" />
