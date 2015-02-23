@@ -115,10 +115,10 @@ The format of this XML is:
 |Attribute|Description
 |----|----|
 |Type|Possible values: **Office365**, **AppOnly**, **NetworkCredential**. Specifies the type of authentication to use for authentication. 
-|Username|Username to use for authentication
-|Password|Plain text password to use for authentication
-|Domain|Domain to use in the case of `Type="NetworkCredential"`
-|Credential|If specified, other username and password tags will be ignored and the credentials will be retrieved from the Windows Credential Manager.
+|Username|Username to use for authentication, or in the case of `Type="AppOnly"` used for site enumeration if the site urls contain a wildcard.
+|Password|Plain text password to use for authentication, or in the case of `Type="AppOnly"` used for site enumeration if the site urls contain a wildcard.
+|Domain|Domain to use in the case of `Type="NetworkCredential"`, or in the case of `Type="AppOnly"` used for site enumeration if the site urls contain a wildcard.
+|Credential|If specified, other username and password tags will be ignored and the credentials will be retrieved from the Windows Credential Manager, can also be used in the case of `Type="AppOnly"` and is used for site enumeration if the site urls contain a wildcard
 |AppId|Used when `Type="AppOnly"`
 |AppSecret|Used when `Type="AppOnly"`
 

@@ -50,7 +50,7 @@ namespace OfficeDevPnP.TimerService
             {
                 // Clear the IsRunning status if present on a job.
                 _config = XDocument.Load(_configFile);
-         
+
                 var jobs = _config.Descendants("Jobs").Descendants("Job");
                 bool dirty = false;
                 foreach (var job in jobs)
@@ -311,6 +311,30 @@ namespace OfficeDevPnP.TimerService
                                             jobRunner.AppId = authentication.Attribute("ClientId").Value;
                                             jobRunner.AppSecret = authentication.Attribute("ClientSecret").Value;
                                             jobRunner.AuthenticationType = AuthenticationType.AppOnly;
+                                            // Check if wildcards are being used
+                                            var wildcardused = false;
+                                            foreach (var site in sites)
+                                            {
+                                                var url = site.Attribute("Url") != null ? site.Attribute("Url").Value : null;
+                                                if (url.IndexOf("*") > -1)
+                                                {
+                                                    wildcardused = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (wildcardused)
+                                            {
+                                                if (authentication.Attribute("Credential") != null)
+                                                {
+                                                    jobRunner.CredentialManagerLabel = authentication.Attribute("Credential").Value;
+                                                }
+                                                else
+                                                {
+                                                    jobRunner.Username = authentication.Attribute("Username").Value;
+                                                    jobRunner.Password = authentication.Attribute("Password").Value;
+                                                    jobRunner.Domain = authentication.Attribute("Domain") != null ? authentication.Attribute("Domain").Value : null;
+                                                }
+                                            }
                                             break;
                                         }
                                     case "networkcredential":

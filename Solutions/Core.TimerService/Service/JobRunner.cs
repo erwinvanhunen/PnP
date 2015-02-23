@@ -36,6 +36,7 @@ namespace OfficeDevPnP.TimerService
         public string Domain { get; set; }
 
         public Exception Exception { get; set; }
+
         public JobRunner()
         {
             Sites = new List<string>();
@@ -68,6 +69,34 @@ namespace OfficeDevPnP.TimerService
                         {
 
                             jobRunnable.UseAppOnlyAuthentication(AppId, AppSecret);
+
+                            var wildcardused = false;
+                            foreach (var site in Sites)
+                            {
+                                if (site.IndexOf("*") > -1)
+                                {
+                                    wildcardused = true;
+                                    break;
+                                }
+                            }
+                            if (wildcardused)
+                            {
+                                if (!string.IsNullOrEmpty(CredentialManagerLabel))
+                                {
+                                    jobRunnable.SetEnumerationCredentials(CredentialManagerLabel);
+                                }
+                                else
+                                {
+                                    if (!string.IsNullOrEmpty(Domain))
+                                    {
+                                        jobRunnable.SetEnumerationCredentials(Username, Password, Domain);
+                                    }
+                                    else
+                                    {
+                                        jobRunnable.SetEnumerationCredentials(Username, Password);
+                                    }
+                                }
+                            }
                             break;
                         }
                     case AuthenticationType.NetworkCredentials:
