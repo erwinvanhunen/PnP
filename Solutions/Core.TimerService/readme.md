@@ -97,6 +97,7 @@ The format of this XML is:
          Url = "Text" />
     </Sites>
   </Job>
+</Jobs>
 ```
 
 ###Job Tag Attributes###
