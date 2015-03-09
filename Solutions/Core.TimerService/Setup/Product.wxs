@@ -11,7 +11,7 @@
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
      >
   <Product Id="*" Name="OfficeDev PnP Timer Service" Language="1033" Version="1.0.0.0" Manufacturer="OfficeDev PnP" UpgradeCode="6EE869E7-FDBA-4561-9D3D-27C7027A19C4">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64" />
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate  EmbedCab="yes" />
@@ -59,7 +59,7 @@
         <!--<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)" />-->
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
           <Condition Action="disable"><![CDATA[ACCOUNT = "" OR PASSWORD = ""]]></Condition>
-          <Condition Action="enable">ACCOUNT &lt;&gt; "" AND PASSWORD &lt;&gt; ""</Condition>
+          <Condition Action="enable"><![CDATA[ACCOUNT <> "" AND PASSWORD <> ""]]></Condition>
           <Publish Event="EndDialog" Value="Return">1</Publish>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
@@ -70,7 +70,7 @@
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="Enter service account details.">
         </Control>
-        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{DlgTitle}Service account" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="Service account" />
         <Control Type="Text" Width="322" Height="26" X="25" Y="56" Id="BodyLabel" Text="Specify the logon account for the [ProductName] service." NoPrefix="yes">
         </Control>
         <Control Type="Text" Width="275" Height="10" X="25" Y="98" Id="AccountLabel" Text="&amp;Account name (Example: domain\\user or user@domain):" />
@@ -79,20 +79,22 @@
         <Control Type="Edit" Width="194" Height="15" X="25" Y="148" Id="PasswordTextbox" Property="PASSWORD" Password="yes" />
 
         <Control Width="20" Height="18" FixedSize="yes" Type="Bitmap" X="25" Y="170" Id="Warning" Text="WarningIcon"/>
-        <Control Id="WarningLabel" Type="Text" X="40" Y="170" Width="200" Height="40" Text="The account entered here will not be validated. Make sure that the account details entered are correct." />
+        <Control Id="WarningLabel" Type="Text" X="50" Y="170" Width="200" Height="40" Text="The account entered here will not be validated. Make sure that the account details entered are correct." />
       </Dialog>
 
       <InstallUISequence>
         <Show Dialog="CheckClientSDKDlg" Before="WelcomeEulaDlg" >
           <![CDATA[NOT (Installed OR CLIENTASSEMBLIES)]]>
         </Show>
-        <Show Dialog="ServiceAccountDlg" After="WelcomeEulaDlg"></Show>
+        <Show Dialog="ServiceAccountDlg" After="WelcomeEulaDlg">
+          <![CDATA[(NOT Installed AND NOT(REMOVE="ALL"))]]>
+        </Show>
       </InstallUISequence>
     </UI>
   </Product>
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
+      <Directory Id="ProgramFiles64Folder">
         <Directory Id="APPFOLDER" Name="OfficeDevPnP">
           <Directory Id="INSTALLFOLDER" Name="Timerservice" />
         </Directory>
@@ -102,16 +104,17 @@
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
     <WixVariable Id="WixUILicenseRtf" Value="Apache License Version 2.rtf" />
     <WixVariable Id="WixUIDialogBmp" Value="officedevpnp.png"/>
+    <WixVariable Id="WixUIBannerBmp" Value="setupbanner.png"/>
     <UIRef Id="WixUI_Minimal" />
 
   </Fragment>
 
   <Fragment>
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <Component Id="ServiceEXE" Guid="ee934ac8-fca6-42b0-8203-69ce050c1c06">
+      <Component Id="OfficeDevPnP.TimerService.exe" Guid="{EFF6FBC9-A48A-4028-930E-818844FDD092}" Win64="yes">
         <File Id="Core" Source="$(var.OfficeDevPnP.Core.TargetPath)"/>
-        <File Id='TimerServiceEXE' Name='OfficeDevPnP.TimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\OfficeDevPnP.TimerService.exe'  KeyPath='yes'/>
-        <ServiceInstall Id="ServiceInstaller"
+        <File Id='OfficeDevPnP.TimerService.exe' Name='OfficeDevPnP.TimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\OfficeDevPnP.TimerService.exe'  KeyPath='yes'/>
+        <ServiceInstall Id="TimerService_Service"
                         Type="ownProcess"
                         Name="OfficeDev PnP Timer Service"
                         DisplayName="OfficeDev PnP Timer Service"
@@ -120,7 +123,7 @@
                         Account="[ACCOUNT]"
                         Password="[PASSWORD]"
                         ErrorControl="normal" />
-        <!-- <ServiceControl Id="StartService" Start="install" Stop="both" Remove="uninstall" Name="OfficeDevPnP.TimerService.exe" Wait="yes" /> -->
+        <ServiceControl Id="TimerService_Service" Start="install" Stop="both" Remove="uninstall" Name="OfficeDev PnP Timer Service" Wait="yes" />
       </Component>
     </ComponentGroup>
   </Fragment>

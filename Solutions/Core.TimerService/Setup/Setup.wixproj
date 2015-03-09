@@ -26,6 +26,7 @@
   <ItemGroup>
     <Content Include="Apache License Version 2.rtf" />
     <Content Include="officedevpnp.png" />
+    <Content Include="setupbanner.png" />
     <Content Include="warningicon20x18.png" />
   </ItemGroup>
   <ItemGroup>

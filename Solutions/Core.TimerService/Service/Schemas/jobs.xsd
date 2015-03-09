@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="AuthenticationType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Office365" />
+      <xs:enumeration value="AppOnly" />
+      <xs:enumeration value="NetworkCredential" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ScheduleType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Minute" />
+      <xs:enumeration value="Daily" />
+      <xs:enumeration value="Weekly" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="Jobs">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" name="Job">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Authentication">
+                <xs:complexType>
+                  <xs:attribute name="Type" type="AuthenticationType" use="required" />
+                  <xs:attribute name="Credential" type="xs:string" use="optional" />
+                  <xs:attribute name="Username" type="xs:string" use="optional" />
+                  <xs:attribute name="Password" type="xs:string" use="optional"/>
+                  <xs:attribute name="Domain" type="xs:string" use="optional" />
+                  <xs:attribute name="AppId" type="xs:string" use="optional" />
+                  <xs:attribute name="AppSecret" type="xs:string" use="optional"/>
+                  <xs:attribute name="EnumerationCredential" type="xs:string" use="optional" />
+                  <xs:attribute name="EnumerationUsername" type="xs:string" use="optional" />
+                  <xs:attribute name="EnumerationPassword" type="xs:string" use="optional" />
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Sites">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element maxOccurs="unbounded" name="Site">
+                      <xs:complexType>
+                        <xs:attribute name="Url" type="xs:string" use="required" />
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="Name" type="xs:string" use="required" />
+            <xs:attribute name="Disabled" type="xs:string" use="required" />
+            <xs:attribute name="Assembly" type="xs:string" use="required" />
+            <xs:attribute name="Class" type="xs:string" use="required" />
+            <xs:attribute name="ScheduleType" type="ScheduleType" use="required" />
+            <xs:attribute name="Repeat" type="xs:unsignedByte" use="optional" />
+            <xs:attribute name="Day" type="xs:unsignedByte" use="optional" />
+            <xs:attribute name="Time" type="xs:string" use="optional" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

@@ -32,7 +32,7 @@ namespace OfficeDevPnP.TimerService
 
         public string TenantName { get; set; }
 
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string Domain { get; set; }
 
         public Exception Exception { get; set; }

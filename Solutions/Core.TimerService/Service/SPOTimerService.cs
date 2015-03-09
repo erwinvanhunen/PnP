@@ -160,7 +160,7 @@ namespace OfficeDevPnP.TimerService
         public void OnTaskBeginning(JobRunner jobRunner)
         {
             Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StartingJob0_1, jobRunner.Name, jobRunner.Id);
-            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id);
+            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id.ToString());
 
             if (jobElement != null)
             {
@@ -179,7 +179,7 @@ namespace OfficeDevPnP.TimerService
 
         public void OnTaskComplete(JobRunner jobRunner)
         {
-            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id);
+            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id.ToString());
 
             if (jobElement != null)
             {
@@ -240,8 +240,8 @@ namespace OfficeDevPnP.TimerService
 
         private void ParseMinuteJob(XElement job, XElement lastRun)
         {
-            int minuteRepeat;
-            int.TryParse(job.Attribute("Repeat").Value, out minuteRepeat);
+            int minuteInterval;
+            int.TryParse(job.Attribute("Interval").Value, out minuteInterval);
 
             if (lastRun != null)
             {
@@ -252,7 +252,7 @@ namespace OfficeDevPnP.TimerService
                     TimeSpan timeSpan = new TimeSpan(DateTime.Now.Ticks);
                     var difference = timeSpan.Subtract(new TimeSpan(lastRunTicks));
                     // Check how long ago it is
-                    if (difference.TotalMinutes >= minuteRepeat)
+                    if (difference.TotalMinutes >= minuteInterval)
                     {
                         QueueJob(job);
                     }
@@ -271,7 +271,7 @@ namespace OfficeDevPnP.TimerService
         private void QueueJob(XElement job)
         {
             var timerName = job.Attribute("Name") != null ? job.Attribute("Name").Value : "<unknown>";
-            var jobId = job.Attribute("Id") != null ? job.Attribute("Id").Value : null;
+            var jobId = job.Attribute("Id") != null ? Guid.Parse(job.Attribute("Id").Value) : Guid.Empty;
 
             var assemblyPath = job.Attribute("Assembly") != null ? job.Attribute("Assembly").Value : null;
             if (assemblyPath != null)
@@ -339,10 +339,17 @@ namespace OfficeDevPnP.TimerService
                                         }
                                     case "networkcredential":
                                         {
-                                            jobRunner.Username = authentication.Attribute("Username").Value;
-                                            jobRunner.Password = authentication.Attribute("Password").Value;
-                                            jobRunner.Domain = authentication.Attribute("Domain").Value;
                                             jobRunner.AuthenticationType = AuthenticationType.NetworkCredentials;
+                                            if (authentication.Attribute("Credential") != null)
+                                            {
+                                                jobRunner.CredentialManagerLabel = authentication.Attribute("Credential").Value;
+                                            }
+                                            else
+                                            {
+                                                jobRunner.Username = authentication.Attribute("Username").Value;
+                                                jobRunner.Password = authentication.Attribute("Password").Value;
+                                                jobRunner.Domain = authentication.Attribute("Domain").Value;
+                                            }
                                             break;
                                         }
                                 }
@@ -353,6 +360,7 @@ namespace OfficeDevPnP.TimerService
                                     var url = site.Attribute("Url").Value;
                                     jobRunner.Sites.Add(url);
                                 }
+
 
                                 _jobQueue.Add(jobRunner);
 

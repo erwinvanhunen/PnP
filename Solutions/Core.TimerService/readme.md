@@ -80,7 +80,7 @@ The format of this XML is:
        Assembly = "Text" 
        Class = "Text" 
        ScheduleType = "Minute" | "Daily" | "Weekly"
-       Repeat = "Integer"
+       Interval = "Integer"
        Day = "Integer"
        Time = "HH:MM"
        >
@@ -108,7 +108,7 @@ The format of this XML is:
 |Assembly|The full path to the assembly (.dll) containing the timerjob, e.g. c:\path\to\assembly.dll
 |Class|The full name, including namespace, of the class of the timerjob, e.g. MyNameSpace.DemoJob
 |ScheduleType|Possible values: **Minute**,**Daily** or **Weekly**. If **Minute** is specified: run a job every X minutes. Specify the Repeat attribute with an interval. If **Daily**: run a job on a specific time every day. Specify the Time attribute with a value. If **Weekly** is specified: run a job on a specific day every week. Specify both the Time and Day attributes
-|Repeat|Sets an interval in minutes to run a timerjob at. Only used in case of `ScheduleType="Minute"`
+|Interval|Sets an interval in minutes to run a timerjob at. Only used in case of `ScheduleType="Minute"`
 |Day|Specifies the day of the week to run a job when `ScheduleType="Weekly"`. Sunday = 0.
 |Time|Specifies the time of the day to run a job when `ScheduleType="Daily"` or `ScheduleType="Weekly"`. Specify in HH:MM format, e.g. 14:20.
 
