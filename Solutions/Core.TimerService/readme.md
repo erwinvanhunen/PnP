@@ -43,7 +43,7 @@ After building the solution, open the Developer Command Prompt for VS2013/VS2015
 
 Navigate to the (debug|release)\bin folder and enter:
 
-    installutil SPOTimerService.exe
+    installutil OfficeDevPnP.TimerService.exe
 
 To start the time service
 
