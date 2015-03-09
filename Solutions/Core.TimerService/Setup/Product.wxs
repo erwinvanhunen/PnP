@@ -116,14 +116,14 @@
         <File Id='OfficeDevPnP.TimerService.exe' Name='OfficeDevPnP.TimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\OfficeDevPnP.TimerService.exe'  KeyPath='yes'/>
         <ServiceInstall Id="TimerService_Service"
                         Type="ownProcess"
-                        Name="OfficeDev PnP Timer Service"
+                        Name="SPOTimerService"
                         DisplayName="OfficeDev PnP Timer Service"
                         Description="Timer Service for PnP Timer Jobs"
                         Start="auto"
                         Account="[ACCOUNT]"
                         Password="[PASSWORD]"
                         ErrorControl="normal" />
-        <ServiceControl Id="TimerService_Service" Start="install" Stop="both" Remove="uninstall" Name="OfficeDev PnP Timer Service" Wait="yes" />
+        <ServiceControl Id="TimerService_Service" Start="install" Stop="both" Remove="uninstall" Name="SPOTimerService" Wait="yes" />
       </Component>
     </ComponentGroup>
   </Fragment>
