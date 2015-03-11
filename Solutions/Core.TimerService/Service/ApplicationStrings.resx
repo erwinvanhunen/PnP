@@ -118,16 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="EnumeratingJobs" xml:space="preserve">
-    <value>Enumerating Jobs</value>
+    <value>Enumerating JobCollections</value>
   </data>
   <data name="FinishedJob0_1" xml:space="preserve">
-    <value>Finished Job "{0}" ({1})</value>
+    <value>Finished JobCollection "{0}" ({1})</value>
   </data>
   <data name="ServiceIndentifier" xml:space="preserve">
     <value>SPOTIMERSERVICE</value>
   </data>
   <data name="StartingJob0_1" xml:space="preserve">
-    <value>Starting Job "{0}"({1})</value>
+    <value>Starting JobCollection "{0}"({1})</value>
   </data>
   <data name="StartingService" xml:space="preserve">
     <value>Starting service</value>

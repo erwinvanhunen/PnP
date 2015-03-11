@@ -85,7 +85,12 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ApplicationStrings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Domain\Job.cs" />
+    <Compile Include="Domain\Jobs.cs" />
+    <Compile Include="Domain\JobSite.cs" />
     <Compile Include="Enums\ScheduleType.cs" />
+    <Compile Include="Helpers\Encryption.cs" />
+    <Compile Include="Helpers\ParserHelper.cs" />
     <Compile Include="JobRunner.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>

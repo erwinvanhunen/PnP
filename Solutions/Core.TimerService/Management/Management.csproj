@@ -44,7 +44,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseCmdlet.cs" />
-    <Compile Include="GetSPOTimerJobs.cs" />
+    <Compile Include="AddSPOTimerJob.cs" />
+    <Compile Include="GetSPOTimerJob.cs" />
+    <Compile Include="PipeBinds\GuidPipeBind.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SPOTimerJob.cs" />
   </ItemGroup>
@@ -52,6 +54,10 @@
     <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\OfficeDevPnP.Core\OfficeDevPnP.Core\OfficeDevPnP.Core.csproj">
+      <Project>{f2077977-8ebf-409d-bbf4-8efb328928a8}</Project>
+      <Name>OfficeDevPnP.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Service\Service.csproj">
       <Project>{293c0300-c4dc-4266-b0a4-ea3b656b1e19}</Project>
       <Name>Service</Name>

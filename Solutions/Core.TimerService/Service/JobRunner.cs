@@ -1,45 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.Serialization;
 using OfficeDevPnP.Core.Framework.TimerJobs;
 using OfficeDevPnP.Core.Framework.TimerJobs.Enums;
 using OfficeDevPnP.Core.Utilities;
+using OfficeDevPnP.TimerService.Domain;
 
 namespace OfficeDevPnP.TimerService
 {
     public class JobRunner
     {
-        public string Name { get; set; }
-        public string Assembly { get; set; }
+        private Job _job;
+        public Exception Exception;
 
-        public string Class { get; set; }
-
-        public AuthenticationType AuthenticationType { get; set; }
-
-        public string Username { get; set; }
-
-        public string Password { get; set; }
-
-        public string AppId { get; set; }
-
-        public string AppSecret { get; set; }
-        public string CredentialManagerLabel { get; set; }
-
-        public List<string> Sites { get; set; }
-
-        public TimerJob TimerJob { get; set; }
-        public DateTime LastRun { get; set; }
-
-        public string TenantName { get; set; }
-
-        public Guid Id { get; set; }
-        public string Domain { get; set; }
-
-        public Exception Exception { get; set; }
-
-        public JobRunner()
+        public JobRunner(ref Job job)
         {
-            Sites = new List<string>();
+            _job = job;
+        }
+
+        public Job Job
+        {
+            get { return _job; }
+            set { _job = value; }
         }
 
         public void RunJob()
@@ -47,33 +28,33 @@ namespace OfficeDevPnP.TimerService
             AppDomain appDomain = null;
             try
             {
-                appDomain = AppDomain.CreateDomain("SPOTimerJob_" + Id);
+                appDomain = AppDomain.CreateDomain("SPOTimerJob_" + _job.Id);
 
-                var jobRunnable = (TimerJob)appDomain.CreateInstanceFromAndUnwrap(Assembly, Class);
+                var jobRunnable = (TimerJob)appDomain.CreateInstanceFromAndUnwrap(_job.Assembly, _job.Class);
 
-                switch (AuthenticationType)
+                switch (_job.AuthenticationType)
                 {
                     case AuthenticationType.Office365:
                         {
-                            if (!string.IsNullOrEmpty(CredentialManagerLabel))
+                            if (!string.IsNullOrEmpty(_job.Credential))
                             {
-                                jobRunnable.UseOffice365Authentication(CredentialManagerLabel);
+                                jobRunnable.UseOffice365Authentication(_job.Credential);
                             }
                             else
                             {
-                                jobRunnable.UseOffice365Authentication(Username, Password);
+                                jobRunnable.UseOffice365Authentication(_job.Username, _job.InsecurePassword);
                             }
                             break;
                         }
                     case AuthenticationType.AppOnly:
                         {
 
-                            jobRunnable.UseAppOnlyAuthentication(AppId, AppSecret);
+                            jobRunnable.UseAppOnlyAuthentication(_job.AppId, _job.AppSecret);
 
                             var wildcardused = false;
-                            foreach (var site in Sites)
+                            foreach (var site in _job.Sites)
                             {
-                                if (site.IndexOf("*") > -1)
+                                if (site.Url.IndexOf("*", StringComparison.Ordinal) > -1)
                                 {
                                     wildcardused = true;
                                     break;
@@ -81,19 +62,19 @@ namespace OfficeDevPnP.TimerService
                             }
                             if (wildcardused)
                             {
-                                if (!string.IsNullOrEmpty(CredentialManagerLabel))
+                                if (!string.IsNullOrEmpty(_job.Credential))
                                 {
-                                    jobRunnable.SetEnumerationCredentials(CredentialManagerLabel);
+                                    jobRunnable.SetEnumerationCredentials(_job.Credential);
                                 }
                                 else
                                 {
-                                    if (!string.IsNullOrEmpty(Domain))
+                                    if (!string.IsNullOrEmpty(_job.Domain))
                                     {
-                                        jobRunnable.SetEnumerationCredentials(Username, Password, Domain);
+                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.InsecurePassword, _job.Domain);
                                     }
                                     else
                                     {
-                                        jobRunnable.SetEnumerationCredentials(Username, Password);
+                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.InsecurePassword);
                                     }
                                 }
                             }
@@ -101,30 +82,30 @@ namespace OfficeDevPnP.TimerService
                         }
                     case AuthenticationType.NetworkCredentials:
                         {
-                            if (!string.IsNullOrEmpty(CredentialManagerLabel))
+                            if (!string.IsNullOrEmpty(_job.Credential))
                             {
-                                jobRunnable.UseNetworkCredentialsAuthentication(CredentialManagerLabel);
+                                jobRunnable.UseNetworkCredentialsAuthentication(_job.Credential);
                             }
                             else
                             {
-                                jobRunnable.UseNetworkCredentialsAuthentication(Username, Password, Domain);
+                                jobRunnable.UseNetworkCredentialsAuthentication(_job.Username, _job.InsecurePassword, _job.Domain);
                             }
                             break;
                         }
                 }
-                foreach (var url in Sites)
+                foreach (var site in _job.Sites)
                 {
-                    jobRunnable.AddSite(url);
+                    jobRunnable.AddSite(site.Url);
                 }
                 try
                 {
                     jobRunnable.Run();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Exception = ex;
                 }
-                LastRun = DateTime.Now;
+                _job.LastRun = DateTime.Now.Ticks;
             }
             catch (TypeLoadException)
             {

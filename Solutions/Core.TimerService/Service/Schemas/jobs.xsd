@@ -14,10 +14,10 @@
       <xs:enumeration value="Weekly" />
     </xs:restriction>
   </xs:simpleType>
-  <xs:element name="Jobs">
+  <xs:element name="JobCollections">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" name="Job">
+        <xs:element maxOccurs="unbounded" name="JobCollection">
           <xs:complexType>
             <xs:sequence>
               <xs:element name="Authentication">

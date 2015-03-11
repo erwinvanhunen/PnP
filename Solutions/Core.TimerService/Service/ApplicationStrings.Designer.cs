@@ -70,7 +70,7 @@ namespace OfficeDevPnP.TimerService {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Finished Job &quot;{0}&quot; ({1}).
+        ///   Looks up a localized string similar to Finished JobCollection &quot;{0}&quot; ({1}).
         /// </summary>
         internal static string FinishedJob0_1 {
             get {
@@ -88,7 +88,7 @@ namespace OfficeDevPnP.TimerService {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Starting Job &quot;{0}&quot;({1}).
+        ///   Looks up a localized string similar to Starting JobCollection &quot;{0}&quot;({1}).
         /// </summary>
         internal static string StartingJob0_1 {
             get {

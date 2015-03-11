@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- This is an example jobs file -->
-<Jobs>
-  <Job Name="TestJob" Disabled="False" Assembly="C:\Path\TestTimer.dll" Class="TestTimer.SimpleJob" ScheduleType="Minute" Repeat="5">
+<Jobs UseThreading="False" AuthenticationType="AppOnly" Credential="TestCredential">
+  <Job UseThreading="True" 
+       MaxThreads="5" 
+       Name="TestJob" 
+       Disabled="False" 
+       Assembly="C:\Path\TestTimer.dll" 
+       Class="TestTimer.SimpleJob" 
+       ScheduleType="Minute" 
+       Repeat="5"
+       AuthenticationType="AppOnly" Credential="TestCredential" Username="" Password="" Domain="" AppId="" AppSecret="">
     <!-- The authentication tag below specifies that you want to authenticate against Office 365, and that the credentials you use can be found in the Windows Credential Manager.
     Make sure that the account you use has log on as service rights _and_ that the credential has been created in the credential manager for that account. See readme.md for more information
     on how to create the credential. -->
-    <Authentication Type="AppOnly" Credential="TestCredential" />
+    <Authentication Type="AppOnly" Credential="TestCredential" /> <!-- optional -->
     <Sites>
       <Site Url="https://tenant.sharepoint.com/sites/test1" />
       <Site Url="https://tenant.sharepoint.com/sites/test2" />

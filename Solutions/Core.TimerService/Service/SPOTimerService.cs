@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.ServiceProcess;
 using System.Threading;
 using System.Timers;
-using System.Xml.Linq;
-using System.Xml.Schema;
-using OfficeDevPnP.Core.Framework.TimerJobs.Enums;
+using System.Xml.Serialization;
 using OfficeDevPnP.Core.Utilities;
+using OfficeDevPnP.TimerService.Domain;
 using OfficeDevPnP.TimerService.Enums;
+using OfficeDevPnP.TimerService.Helpers;
 using Timer = System.Timers.Timer;
 
 namespace OfficeDevPnP.TimerService
@@ -19,17 +20,15 @@ namespace OfficeDevPnP.TimerService
         private string _configFile;
         private const string Configfilename = "jobs.xml";
         private readonly Object _timerLock = new Object();
+        private Jobs jobs;
 
         private List<JobRunner> _jobQueue;
 
-        private XDocument _config;
 
         public SPOTimerService()
         {
             InitializeComponent();
         }
-
-
 
         protected override void OnStart(string[] args)
         {
@@ -42,42 +41,73 @@ namespace OfficeDevPnP.TimerService
             _configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "OfficeDevPnP", Configfilename);
             if (!File.Exists(_configFile))
             {
-                XDocument config = new XDocument();
-                config.Add(new XElement("Jobs"));
-                config.Save(_configFile);
+                jobs = new Jobs();
+
+                var ser = new XmlSerializer(typeof(Jobs));
+                using (TextWriter writer = new StreamWriter(_configFile))
+                {
+                    ser.Serialize(writer, jobs);
+                }
+
             }
             else
             {
-                // Clear the IsRunning status if present on a job.
-                _config = XDocument.Load(_configFile);
-
-                var jobs = _config.Descendants("Jobs").Descendants("Job");
-                bool dirty = false;
-                foreach (var job in jobs)
+                var xml = File.ReadAllText(_configFile);
+                jobs = xml.ParseXML<Jobs>();
+              
+                foreach (var job in jobs.JobCollection)
                 {
-                    var isRunning = job.Attribute("IsRunning") != null;
-                    if (isRunning)
+                    if (job.IsRunning)
                     {
-                        dirty = true;
-                        job.Attribute("IsRunning").Remove();
+                        job.IsRunning = false;
                     }
                 }
-                if (dirty)
-                {
-                    _config.Save(_configFile);
-                }
+
+                SaveJobs();
 
             }
 
-            //ParseJobConfig();
+            var thread = new Thread(() =>
+            {
+                // Wait until the exact minute to start
+                Thread.Sleep((60 - DateTime.Now.Second)*1000);
+                ParseJobConfig();
 
-            var timer = new Timer { Interval = 60000 };
-            // 60 seconds
-            timer.Elapsed += TimerOnElapsed;
-            timer.Start();
-
+                // Setup a timer to start every 60 seconds;
+                var timer = new Timer {Interval = 60000};
+                timer.Elapsed += TimerOnElapsed;
+                timer.Start();
+            });
+            thread.Start();
         }
 
+        private void SaveJobs()
+        {
+            // Check Passwords
+            foreach (var job in jobs.JobCollection)
+            {
+                if (job.Password != null)
+                {
+                    var decryptedPw = Encryption.DecryptString(job.Password);
+
+                    if (decryptedPw.Length == 0)
+                    {
+                        job.Password = Encryption.EncryptString(Encryption.ToSecureString(job.Password));
+                    }
+                }
+            }
+            XmlSerializer ser = new XmlSerializer(typeof(Jobs));
+            using (TextWriter writer = new StreamWriter(_configFile))
+            {
+                ser.Serialize(writer, jobs);
+            }
+        }
+
+        private Jobs LoadJobs()
+        {
+            var xml = File.ReadAllText(_configFile);
+            return xml.ParseXML<Jobs>();
+        }
 
         private void TimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
@@ -92,33 +122,27 @@ namespace OfficeDevPnP.TimerService
         {
             _jobQueue = new List<JobRunner>();
 
-            _config = XDocument.Load(_configFile);
+            jobs = LoadJobs();
 
-
-            var jobs = _config.Descendants("Jobs").Descendants("Job");
-            if (jobs.Any())
+            if (jobs.JobCollection.Any())
             {
                 Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.EnumeratingJobs);
-                foreach (var job in jobs)
+                foreach (var job in jobs.JobCollection)
                 {
-                    var jobDisabled = job.Attribute("Disabled") != null ? bool.Parse(job.Attribute("Disabled").Value) : false;
-
-                    var isRunning = job.Attribute("IsRunning") != null;
-                    if (!isRunning && !jobDisabled)
+                    if (!job.IsRunning && !job.Disabled)
                     {
                         // Check if ID set, if not, add ID
-                        var jobId = job.Attribute("Id") != null ? job.Attribute("Id").Value : null;
-                        if (jobId == null)
+                        if (job.Id == Guid.Empty)
                         {
-                            job.SetAttributeValue("Id", Guid.NewGuid());
+                            job.Id = Guid.NewGuid();
                         }
-                        var scheduleType = (ScheduleType)Enum.Parse(typeof(ScheduleType), job.Attribute("ScheduleType").Value);
-                        var lastRun = job.Descendants("LastRun").FirstOrDefault();
-                        switch (scheduleType)
+                        SaveJobs();
+
+                        switch (job.ScheduleType)
                         {
                             case ScheduleType.Minute:
                                 {
-                                    ParseMinuteJob(job, lastRun);
+                                    ParseMinuteJob(job);
                                     break;
                                 }
                             case ScheduleType.Daily:
@@ -142,93 +166,73 @@ namespace OfficeDevPnP.TimerService
                 foreach (var jobRunner in _jobQueue)
                 {
                     var runner = jobRunner;
-                    ThreadPool.QueueUserWorkItem(o =>
+                    if (jobs.UseThreading)
                     {
-                        jobBeginningDelegate(runner);
-
-                        runner.RunJob();
-                        if (runner.Exception != null)
+                        ThreadPool.QueueUserWorkItem(o =>
                         {
-                            Log.Error("SPOTIMERSERVICE", runner.Exception.Message);
-                        }
-                        jobFinishedCallback(runner);
-                    });
+                            jobBeginningDelegate(runner);
+
+                            runner.RunJob();
+                            if (runner.Exception != null)
+                            {
+                                Log.Error("SPOTIMERSERVICE", runner.Exception.Message);
+                            }
+                            jobFinishedCallback(runner);
+                        });
+                    }
+                    else
+                    {
+                        runner.RunJob();
+                    }
                 }
             }
         }
 
         public void OnTaskBeginning(JobRunner jobRunner)
         {
-            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StartingJob0_1, jobRunner.Name, jobRunner.Id);
-            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id.ToString());
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.StartingJob0_1, jobRunner.Job.Name, jobRunner.Job.Id);
 
-            if (jobElement != null)
+            jobRunner.Job.IsRunning = true;
+
+
+            lock (_timerLock)
             {
-                var isRunning = jobElement.Attribute("IsRunning") != null;
-                if (!isRunning)
-                {
-                    jobElement.SetAttributeValue("IsRunning", "True");
-                    lock (_timerLock)
-                    {
-                        _config.Save(_configFile);
-                    }
-                }
+                SaveJobs();
             }
+
 
         }
 
         public void OnTaskComplete(JobRunner jobRunner)
         {
-            var jobElement = _config.Descendants("Jobs").Descendants("Job").FirstOrDefault(n => n.Attribute("Id").Value == jobRunner.Id.ToString());
+            jobRunner.Job.IsRunning = false;
 
-            if (jobElement != null)
+            lock (_timerLock)
             {
-                var isRunning = jobElement.Attribute("IsRunning") != null;
-                if (isRunning)
-                {
-                    jobElement.Attribute("IsRunning").Remove();
-                }
-
-                var lastRun = jobElement.Descendants("LastRun").FirstOrDefault();
-                if (lastRun != null)
-                {
-                    lastRun.Attribute("Value").Value = jobRunner.LastRun.Ticks.ToString();
-                }
-                else
-                {
-                    lastRun = new XElement("LastRun");
-                    lastRun.SetAttributeValue("Value", jobRunner.LastRun.Ticks.ToString());
-                    jobElement.Add(lastRun);
-                }
-                lock (_timerLock)
-                {
-                    _config.Save(_configFile);
-                }
+                SaveJobs();
             }
-            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.FinishedJob0_1, jobRunner.Name, jobRunner.Id);
+
+            Log.Info(ApplicationStrings.ServiceIndentifier, ApplicationStrings.FinishedJob0_1, jobRunner.Job.Name, jobRunner.Job.Id);
         }
 
-        private void ParseWeeklyJob(XElement job)
+        private void ParseWeeklyJob(Job job)
         {
             DateTime specificTime;
 
-            DateTime.TryParse(job.Attribute("Time").Value, out specificTime);
-
-            int weekday;
-            int.TryParse(job.Attribute("Day").Value, out weekday);
+            DateTime.TryParse(job.Time, out specificTime);
 
             var now = DateTime.Now;
-            if (((int)now.DayOfWeek) == weekday && now.Hour == specificTime.Hour && now.Minute == specificTime.Minute)
+            if (((int)now.DayOfWeek) == job.Day && now.Hour == specificTime.Hour && now.Minute == specificTime.Minute)
             {
                 QueueJob(job);
             }
         }
 
-        private void ParseDailyJob(XElement job)
+        private void ParseDailyJob(Job job)
         {
             DateTime specificTime;
 
-            DateTime.TryParse(job.Attribute("Time").Value, out specificTime);
+            DateTime.TryParse(job.Time, out specificTime);
 
             var now = DateTime.Now;
 
@@ -238,26 +242,14 @@ namespace OfficeDevPnP.TimerService
             }
         }
 
-        private void ParseMinuteJob(XElement job, XElement lastRun)
+        private void ParseMinuteJob(Job job)
         {
-            int minuteInterval;
-            int.TryParse(job.Attribute("Interval").Value, out minuteInterval);
-
-            if (lastRun != null)
+            if (job.LastRun > 0)
             {
-                long lastRunTicks;
-                long.TryParse(lastRun.Attribute("Value").Value, out lastRunTicks);
-                if (lastRunTicks > 0)
-                {
-                    TimeSpan timeSpan = new TimeSpan(DateTime.Now.Ticks);
-                    var difference = timeSpan.Subtract(new TimeSpan(lastRunTicks));
-                    // Check how long ago it is
-                    if (difference.TotalMinutes >= minuteInterval)
-                    {
-                        QueueJob(job);
-                    }
-                }
-                else
+                TimeSpan timeSpan = new TimeSpan(DateTime.Now.Ticks);
+                var difference = timeSpan.Subtract(new TimeSpan(job.LastRun));
+                // Check how long ago it is
+                if (difference.TotalMinutes >= job.Interval)
                 {
                     QueueJob(job);
                 }
@@ -266,109 +258,19 @@ namespace OfficeDevPnP.TimerService
             {
                 QueueJob(job);
             }
+
         }
 
-        private void QueueJob(XElement job)
+        private void QueueJob(Job job)
         {
-            var timerName = job.Attribute("Name") != null ? job.Attribute("Name").Value : "<unknown>";
-            var jobId = job.Attribute("Id") != null ? Guid.Parse(job.Attribute("Id").Value) : Guid.Empty;
-
-            var assemblyPath = job.Attribute("Assembly") != null ? job.Attribute("Assembly").Value : null;
-            if (assemblyPath != null)
+            if (job.Sites.Any())
             {
-                var className = job.Attribute("Class") != null ? job.Attribute("Class").Value : null;
-                if (className != null)
-                {
-                    var authentication = job.Descendants("Authentication").FirstOrDefault();
-                    if (authentication != null)
-                    {
-                        var authType = authentication.Attribute("Type") != null ? authentication.Attribute("Type").Value : null;
-                        if (authType != null)
-                        {
-                            var sites = job.Descendants("Sites").Descendants("Site");
-                            if (sites.Any())
-                            {
-                                var jobRunner = new JobRunner { Id = jobId, Name = timerName, Class = className, Assembly = assemblyPath };
-                                switch (authType.ToLower())
-                                {
-                                    case "office365":
-                                        {
-                                            jobRunner.AuthenticationType = AuthenticationType.Office365;
+                var jobRunner = new JobRunner(ref job);
 
-                                            if (authentication.Attribute("Credential") != null)
-                                            {
-                                                jobRunner.CredentialManagerLabel = authentication.Attribute("Credential").Value;
-                                            }
-                                            else
-                                            {
-                                                jobRunner.Username = authentication.Attribute("Username").Value;
-                                                jobRunner.Password = authentication.Attribute("Password").Value;
-                                            }
-                                            break;
-                                        }
-                                    case "apponly":
-                                        {
-                                            jobRunner.AppId = authentication.Attribute("ClientId").Value;
-                                            jobRunner.AppSecret = authentication.Attribute("ClientSecret").Value;
-                                            jobRunner.AuthenticationType = AuthenticationType.AppOnly;
-                                            // Check if wildcards are being used
-                                            var wildcardused = false;
-                                            foreach (var site in sites)
-                                            {
-                                                var url = site.Attribute("Url") != null ? site.Attribute("Url").Value : null;
-                                                if (url.IndexOf("*") > -1)
-                                                {
-                                                    wildcardused = true;
-                                                    break;
-                                                }
-                                            }
-                                            if (wildcardused)
-                                            {
-                                                if (authentication.Attribute("Credential") != null)
-                                                {
-                                                    jobRunner.CredentialManagerLabel = authentication.Attribute("Credential").Value;
-                                                }
-                                                else
-                                                {
-                                                    jobRunner.Username = authentication.Attribute("Username").Value;
-                                                    jobRunner.Password = authentication.Attribute("Password").Value;
-                                                    jobRunner.Domain = authentication.Attribute("Domain") != null ? authentication.Attribute("Domain").Value : null;
-                                                }
-                                            }
-                                            break;
-                                        }
-                                    case "networkcredential":
-                                        {
-                                            jobRunner.AuthenticationType = AuthenticationType.NetworkCredentials;
-                                            if (authentication.Attribute("Credential") != null)
-                                            {
-                                                jobRunner.CredentialManagerLabel = authentication.Attribute("Credential").Value;
-                                            }
-                                            else
-                                            {
-                                                jobRunner.Username = authentication.Attribute("Username").Value;
-                                                jobRunner.Password = authentication.Attribute("Password").Value;
-                                                jobRunner.Domain = authentication.Attribute("Domain").Value;
-                                            }
-                                            break;
-                                        }
-                                }
+                _jobQueue.Add(jobRunner);
 
-
-                                foreach (var site in sites)
-                                {
-                                    var url = site.Attribute("Url").Value;
-                                    jobRunner.Sites.Add(url);
-                                }
-
-
-                                _jobQueue.Add(jobRunner);
-
-                            }
-                        }
-                    }
-                }
             }
+
         }
         protected override void OnStop()
         {

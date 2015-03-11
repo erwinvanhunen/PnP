@@ -19,6 +19,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Setup", "Setup\Setup.wixpro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Management", "Management\Management.csproj", "{F82E01C6-1FDA-475D-BDF9-CAFD236EE590}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -115,6 +117,26 @@ Global
 		{F82E01C6-1FDA-475D-BDF9-CAFD236EE590}.Release15|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{F82E01C6-1FDA-475D-BDF9-CAFD236EE590}.Release15|Mixed Platforms.Build.0 = Release|Any CPU
 		{F82E01C6-1FDA-475D-BDF9-CAFD236EE590}.Release15|x86.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug15|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug15|Any CPU.Build.0 = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug15|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug15|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Debug15|x86.ActiveCfg = Debug|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release|x86.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release15|Any CPU.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release15|Any CPU.Build.0 = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release15|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release15|Mixed Platforms.Build.0 = Release|Any CPU
+		{5E587B29-8FE6-4582-A6D2-B5B5CD3A6320}.Release15|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
