@@ -42,7 +42,7 @@ namespace OfficeDevPnP.TimerService
                             }
                             else
                             {
-                                jobRunnable.UseOffice365Authentication(_job.Username, _job.InsecurePassword);
+                                jobRunnable.UseOffice365Authentication(_job.Username, _job.GetInsecurePassword());
                             }
                             break;
                         }
@@ -70,11 +70,11 @@ namespace OfficeDevPnP.TimerService
                                 {
                                     if (!string.IsNullOrEmpty(_job.Domain))
                                     {
-                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.InsecurePassword, _job.Domain);
+                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.GetInsecurePassword(), _job.Domain);
                                     }
                                     else
                                     {
-                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.InsecurePassword);
+                                        jobRunnable.SetEnumerationCredentials(_job.Username, _job.GetInsecurePassword());
                                     }
                                 }
                             }
@@ -88,7 +88,7 @@ namespace OfficeDevPnP.TimerService
                             }
                             else
                             {
-                                jobRunnable.UseNetworkCredentialsAuthentication(_job.Username, _job.InsecurePassword, _job.Domain);
+                                jobRunnable.UseNetworkCredentialsAuthentication(_job.Username, _job.GetInsecurePassword(), _job.Domain);
                             }
                             break;
                         }
@@ -97,6 +97,8 @@ namespace OfficeDevPnP.TimerService
                 {
                     jobRunnable.AddSite(site.Url);
                 }
+                jobRunnable.UseThreading = _job.UseThreading;
+                jobRunnable.MaximumThreads = _job.MaxThreads;
                 try
                 {
                     jobRunnable.Run();

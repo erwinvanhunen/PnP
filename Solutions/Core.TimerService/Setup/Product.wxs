@@ -96,7 +96,8 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="APPFOLDER" Name="OfficeDevPnP">
-          <Directory Id="INSTALLFOLDER" Name="Timerservice" />
+          <Directory Id="INSTALLFOLDER" Name="Timerservice">
+          </Directory>
         </Directory>
       </Directory>
     </Directory>
@@ -110,10 +111,10 @@
   </Fragment>
 
   <Fragment>
-    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <Component Id="OfficeDevPnP.TimerService.exe" Guid="{EFF6FBC9-A48A-4028-930E-818844FDD092}" Win64="yes">
+    <ComponentGroup Id="ProductComponents">
+      <Component Id="SPOTimerService.exe" Guid="{EFF6FBC9-A48A-4028-930E-818844FDD092}" Win64="yes" Directory="INSTALLFOLDER">
         <File Id="Core" Source="$(var.OfficeDevPnP.Core.TargetPath)"/>
-        <File Id='OfficeDevPnP.TimerService.exe' Name='OfficeDevPnP.TimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\OfficeDevPnP.TimerService.exe'  KeyPath='yes'/>
+        <File Id='SPOTimerService.exe' Name='SPOTimerService.exe' DiskId='1' Source='$(var.Service.ProjectDir)bin\$(var.Service.Configuration)\SPOTimerService.exe'  KeyPath='yes'/>
         <ServiceInstall Id="TimerService_Service"
                         Type="ownProcess"
                         Name="SPOTimerService"
@@ -124,6 +125,10 @@
                         Password="[PASSWORD]"
                         ErrorControl="normal" />
         <ServiceControl Id="TimerService_Service" Start="install" Stop="both" Remove="uninstall" Name="SPOTimerService" Wait="yes" />
+        <File Id="FormatFile" Source="$(var.Management.ProjectDir)bin\$(var.Management.Configuration)\ModuleFiles\OfficeDevPnP.TimerService.Management.Format.ps1xml" />
+        <File Id="PSD1File" Source="$(var.Management.ProjectDir)bin\$(var.Management.Configuration)\ModuleFiles\OfficeDevPnP.TimerService.Management.psd1" />
+        <File Id="Management" Source="$(var.Management.TargetPath)"/>
+        <Environment Id="PSMODULEPATH" Name="PSMODULEPATH" Value="[INSTALLFOLDER]" Permanent="no" Part="last" Action="set" System="yes" />
       </Component>
     </ComponentGroup>
   </Fragment>

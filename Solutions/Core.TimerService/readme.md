@@ -74,7 +74,7 @@ The format of this XML is:
 
 ```XML
 <?xml version="1.0" encoding="utf-8"?>
-<Jobs>
+<Jobs UseThreading = "True|False">
   <Job Name = "Text" 
        Disabled= "True" | "False"                
        Assembly = "Text" 
@@ -83,15 +83,16 @@ The format of this XML is:
        Interval = "Integer"
        Day = "Integer"
        Time = "HH:MM"
+       AuthenticationType = ""Office365" | "AppOnly" | "NetworkCredentials""
+       Username = "Text"
+       Password = "Text"
+       Domain = "Text"
+       Credential = "Text"
+       AppId = "Text"
+       AppSecret = "Text"
+       UseThreading = "True|False"
+	   MaxThreads = "Integer"
        >
-    <Authentication 
-          Type = "Office365" | "AppOnly" | "NetworkCredential"
-          Username = "Text" 
-          Password = "Text"
-          Domain = "Text"
-          Credential = "Text"
-          AppId = "Text"
-          AppSecret = "Text" />
     <Sites>
       <Site 
          Url = "Text" />

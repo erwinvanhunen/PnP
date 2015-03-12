@@ -49,7 +49,7 @@ namespace OfficeDevPnP.TimerService.Domain
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         [DefaultValue(true)]
-        public string UseThreading { get; set; }
+        public bool UseThreading { get; set; }
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -101,9 +101,9 @@ namespace OfficeDevPnP.TimerService.Domain
         [DefaultValue(null)]
         public string Password { get; set; }
 
-        public string InsecurePassword
+        public string GetInsecurePassword()
         {
-            get { return Encryption.ToInsecureString(Encryption.DecryptString(Password)); }
+            return Encryption.ToInsecureString(Encryption.DecryptString(Password));
         }
 
         /// <remarks/>
