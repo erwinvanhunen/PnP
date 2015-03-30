@@ -21,20 +21,35 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             var existingFieldIds = existingFields.Select(l => l.Id).ToList();
 
             var fields = template.SiteFields;
-
-            foreach (var field in fields)
+            var scope = new ExceptionHandlingScope(web.Context);
+            using (scope.StartScope())
             {
-                XDocument document = XDocument.Parse(field.SchemaXml);
-                var fieldId = document.Root.Attribute("ID").Value;
-
-
-                if (!existingFieldIds.Contains(Guid.Parse(fieldId)))
+                using (scope.StartTry())
                 {
-                    var fieldXml = parser.Parse(field.SchemaXml);
-                    web.Fields.AddFieldAsXml(fieldXml, false, AddFieldOptions.DefaultValue);
-                    web.Context.ExecuteQueryRetry();
+                    foreach (var field in fields)
+                    {
+                        XDocument document = XDocument.Parse(field.SchemaXml);
+                        var fieldId = document.Root.Attribute("ID").Value;
+
+
+                        if (!existingFieldIds.Contains(Guid.Parse(fieldId)))
+                        {
+                            var fieldXml = parser.Parse(field.SchemaXml);
+                            web.Fields.AddFieldAsXml(fieldXml, false, AddFieldOptions.DefaultValue);
+
+                        }
+                    }
+                }
+                using (scope.StartCatch())
+                {
+
+                }
+                using (scope.StartFinally())
+                {
+
                 }
             }
+            web.Context.ExecuteQueryRetry();
         }
 
 
