@@ -13,8 +13,6 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
     {
         public override void ProvisionObjects(Web web, ProvisioningTemplate template)
         {
-            Stopwatch p = new Stopwatch();
-            p.Start();
             var existingCts = web.AvailableContentTypes;
             web.Context.Load(existingCts, cts => cts.Include(ct => ct.StringId));
             web.Context.ExecuteQueryRetry();
@@ -33,8 +31,6 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                     existingCtsIds.Add(contentTypeId);
                 }
             }
-            p.Stop();
-            var p1 = p.ElapsedMilliseconds;
         }
 
         private void CreateContentType(Web web, XElement ct)

@@ -14,6 +14,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
         public override void ProvisionObjects(Web web, ProvisioningTemplate template)
         {
             var parser = new TokenParser(web);
+            parser.PreCache();
             var existingFields = web.Fields;
 
             web.Context.Load(existingFields, fs => fs.Include(f => f.Id));

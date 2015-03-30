@@ -16,6 +16,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
         public override void ProvisionObjects(Web web, ProvisioningTemplate template)
         {
             var parser = new TokenParser(web);
+            parser.PreCache();
 
             if (!web.IsPropertyAvailable("ServerRelativeUrl"))
             {

@@ -30,6 +30,17 @@ namespace OfficeDevPnP.Core.Framework.ObjectHandlers
             _tokens = sortedTokens.ToList();
         }
 
+        /// <summary>
+        /// Call this before entering an ExceptionHandlingScope
+        /// </summary>
+        public void PreCache()
+        {
+            foreach (var token in _tokens)
+            {
+                token.GetReplaceValue();
+            }
+        }
+
         public string Parse(string input)
         {
             if (!string.IsNullOrEmpty(input))
