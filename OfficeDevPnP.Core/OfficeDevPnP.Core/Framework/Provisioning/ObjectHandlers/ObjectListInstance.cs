@@ -69,7 +69,6 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                         }
 
                         // EnableAttachments are not supported for DocumentLibraries and Surveys
-                        // TODO: the user should be warned
                         if (createdList.BaseTemplate != (int)ListTemplateType.DocumentLibrary && createdList.BaseTemplate != (int)ListTemplateType.Survey)
                         {
                             createdList.EnableAttachments = list.EnableAttachments;
@@ -81,8 +80,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                         if (list.EnableVersioning)
                         {
                             createdList.MajorVersionLimit = list.MaxVersionLimit;
-                       
-                            if (createdList.BaseTemplate == (int) ListTemplateType.DocumentLibrary)
+
+                            if (createdList.BaseTemplate == (int)ListTemplateType.DocumentLibrary)
                             {
                                 // Only supported on Document Libraries
                                 createdList.EnableMinorVersions = list.EnableMinorVersions;
@@ -95,8 +94,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                         createdList.EnableFolderCreation = list.EnableFolderCreation;
                         createdList.Hidden = list.Hidden;
                         createdList.ContentTypesEnabled = list.ContentTypesEnabled;
-                      
-                      
+
+
                         createdList.Update();
 
                         web.Context.Load(createdList.Views);
@@ -220,63 +219,23 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
 
                     foreach (var view in list.Views)
                     {
-                        var viewDoc = XDocument.Parse(view.SchemaXml);
+                        var viewFields = view.ViewFields.Select(f => f.Name).ToArray();
 
-                        var displayNameXml = viewDoc.Root.Attribute("DisplayName");
-                        if (displayNameXml == null)
-                        {
-                            throw new ApplicationException("Invalid View element, missing a valid value for the attribute DisplayName.");
-                        }
-                        var viewTitle = displayNameXml.Value;
-
-                        // Type
-                        var viewTypeString = viewDoc.Root.Attribute("Type") != null ? viewDoc.Root.Attribute("Type").Value : "None";
-                        viewTypeString = viewTypeString[0].ToString().ToUpper() + viewTypeString.Substring(1).ToLower();
-                        var viewType = (ViewType)Enum.Parse(typeof(ViewType), viewTypeString);
-
-                        // Fields
-                        string[] viewFields = null;
-                        var viewFieldsElement = viewDoc.Descendants("ViewFields").FirstOrDefault();
-                        if (viewFieldsElement != null)
-                        {
-                            viewFields = (from field in viewDoc.Descendants("ViewFields").Descendants("FieldRef") select field.Attribute("Name").Value).ToArray();
-                        }
-
-                        // Default view
-                        var viewDefault = viewDoc.Root.Attribute("DefaultView") != null && Boolean.Parse(viewDoc.Root.Attribute("DefaultView").Value);
-
-                        // Row limit
-                        bool viewPaged = true;
-                        uint viewRowLimit = 30;
-                        var rowLimitElement = viewDoc.Descendants("RowLimit").FirstOrDefault();
-                        if (rowLimitElement != null)
-                        {
-                            if (rowLimitElement.Attribute("Paged") != null)
-                            {
-                                viewPaged = bool.Parse(rowLimitElement.Attribute("Paged").Value);
-                            }
-                            viewRowLimit = uint.Parse(rowLimitElement.Value);
-                        }
-
-                        // Query
-                        var viewQuery = new StringBuilder();
-                        foreach (var queryElement in viewDoc.Descendants("Query").Elements())
-                        {
-                            viewQuery.Append(queryElement.ToString());
-                        }
+                        //var viewQuery = XElement.Parse(view.Query);
 
                         var viewCI = new ViewCreationInformation
                         {
                             ViewFields = viewFields,
-                            RowLimit = viewRowLimit,
-                            Paged = viewPaged,
-                            Title = viewTitle,
-                            Query = viewQuery.ToString(),
-                            ViewTypeKind = viewType,
-                            PersonalView = false,
-                            SetAsDefaultView = viewDefault
+                            RowLimit = (uint)view.RowLimit,
+                            Paged = view.Paged,
+                            Title = view.DisplayName,
+                            ViewTypeKind = view.ViewType,
+                            SetAsDefaultView = view.DefaultView
                         };
-
+                        if (view.Query != null)
+                        {
+                            viewCI.Query = view.Query;
+                        }
                         createdList.Views.Add(viewCI);
                         createdList.Update();
                         web.Context.ExecuteQueryRetry();
@@ -347,7 +306,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             web.Context.Load(lists,
                 lc => lc.IncludeWithDefaultProperties(
                     l => l.ContentTypes,
-                    l => l.Views,
+                    l => l.Views.IncludeWithDefaultProperties(v => v.ViewFields),
                     l => l.RootFolder.ServerRelativeUrl,
                     l => l.Fields.IncludeWithDefaultProperties(
                         f => f.Id,
@@ -423,7 +382,19 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                         {
                             if (!view.Hidden)
                             {
-                                list.Views.Add(new View() { SchemaXml = view.ListViewXml });
+                                View modelView = new View();
+                                var viewType = view.ViewType[0] + view.ViewType.Substring(1).ToLower();
+                                modelView.ViewType = (ViewType)Enum.Parse(typeof(ViewType), viewType);
+                                modelView.DisplayName = view.Title;
+                                modelView.DefaultView = view.DefaultView;
+                                modelView.Paged = view.Paged;
+                                modelView.RowLimit = (int)view.RowLimit;
+                                modelView.Query = view.ViewQuery;
+                                modelView.ViewFields.AddRange(
+                                    from viewField in view.ViewFields
+                                    select new FieldRef(viewField));
+                                modelView.Name = view.Id.ToString();
+                                list.Views.Add(modelView);
                             }
                         }
 

@@ -479,13 +479,12 @@
         </xsd:annotation>
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:any minOccurs="1" maxOccurs="unbounded"
-                     processContents="lax" namespace="##any" />
+            <xsd:element name="View" type="pnp:View" minOccurs="1" maxOccurs="unbounded" />
           </xsd:sequence>
           <xsd:attribute name="RemoveExistingViews" use="optional" default="false" type="xsd:boolean">
             <xsd:annotation>
               <xsd:documentation xml:lang="en">
-                A flag to declare if the existing views of the List Instance have to be removed, befire adding the custom views, optional attribute
+                A flag to declare if the existing views of the List Instance have to be removed, before adding the custom views, optional attribute
               </xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>
@@ -604,7 +603,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    
+
     <xsd:attribute name="MinorVersionLimit" type="xsd:int" use="optional">
       <xsd:annotation>
         <xsd:documentation xml:lang="en">
@@ -684,6 +683,83 @@
     </xsd:simpleContent>
   </xsd:complexType>
 
+  <xsd:complexType name="View">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+        Defines a view
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:all>
+      <xsd:element name="ViewFields" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">
+            The FieldRefs entries of the view, optional collection of elements
+          </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="FieldRef" type="pnp:ViewFieldRef"
+                         minOccurs="1" maxOccurs="unbounded" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <xsd:element name="RowLimit" type="pnp:ViewRowLimit" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">
+            The rowlimit of the view, optional element
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Query" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">
+            The query of the view.
+          </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:any processContents="lax" minOccurs="0" maxOccurs="unbounded" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:all>
+    <xsd:attribute name="DisplayName" use="required" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The DisplayName attribute of a view. Required attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="DefaultView" use="optional" type="xsd:boolean" default="false">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The DefaultView attribute of a view, defines if a view is a default view or not. Optional attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="ViewType" use="optional" type="pnp:ViewType" default="None">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The ViewType attribute of a view. Optional attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="ViewRowLimit" mixed="true">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+        The Rowlimit element of a view
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="Paged" type="xsd:boolean" use="optional" default="true">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The Paged attribute of a rowlimit. Optional attribute. Defaults to true.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
   <xsd:complexType name="ContentType">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">
@@ -695,7 +771,7 @@
       <xsd:element name="FieldRefs" minOccurs="0">
         <xsd:annotation>
           <xsd:documentation xml:lang="en">
-            The FieldRefs entries of the List Instance, optional collection of elements
+            The FieldRefs entries of the content type, optional collection of elements
           </xsd:documentation>
         </xsd:annotation>
         <xsd:complexType>
@@ -909,6 +985,20 @@
 
   </xsd:attributeGroup>
 
+  <xsd:complexType name="ViewFieldRef">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+        Defines the binding between a field and a view.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="Name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The internal name of the field. Required attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
   <xsd:complexType name="ListInstanceFieldRef">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">
@@ -1863,6 +1953,22 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="ViewType">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">
+        The view type enumeration
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="None" />
+      <xsd:enumeration value="Calendar" />
+      <xsd:enumeration value="Html" />
+      <xsd:enumeration value="Recurrence" />
+      <xsd:enumeration value="Grid" />
+      <xsd:enumeration value="Chart" />
+      <xsd:enumeration value="Gantt" />
+    </xsd:restriction>
+  </xsd:simpleType>
   <xsd:simpleType name="WikiPageLayout">
     <xsd:annotation>
       <xsd:documentation xml:lang="en">

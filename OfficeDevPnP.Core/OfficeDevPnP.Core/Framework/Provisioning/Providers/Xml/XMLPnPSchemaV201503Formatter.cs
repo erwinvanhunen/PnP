@@ -11,6 +11,10 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Microsoft.SharePoint.Client;
+using ContentType = OfficeDevPnP.Core.Framework.Provisioning.Model.ContentType;
+using Field = OfficeDevPnP.Core.Framework.Provisioning.Model.Field;
+using View = OfficeDevPnP.Core.Framework.Provisioning.Model.View;
 
 namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
 {
@@ -23,7 +27,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
         {
             this._provider = provider;
         }
-        
+
         string IXMLSchemaFormatter.NamespaceUri
         {
             get { return (XMLConstants.PROVISIONING_SCHEMA_NAMESPACE_2015_03); }
@@ -245,9 +249,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                          Views = list.Views.Count > 0 ?
                          new V201503.ListInstanceViews
                          {
-                             Any =
-                                (from view in list.Views
-                                 select view.SchemaXml.ToXmlElement()).ToArray(),
+                             Any = ConvertToV201503SchemaView(list.Views)
                          } : null,
                          Fields = list.Fields.Count > 0 ?
                          new V201503.ListInstanceFields
@@ -433,6 +435,52 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             return (output);
         }
 
+        private XmlElement[] ConvertToV201503SchemaView(List<View> views)
+        {
+            List<XmlElement> viewElements = new List<XmlElement>();
+            foreach (var view in views)
+            {
+                var xElement = new XElement("View");
+                xElement.Add(new XAttribute("DisplayName", view.DisplayName));
+                xElement.Add(new XAttribute("DefaultView", view.DefaultView ? "true" : "false"));
+                xElement.Add(new XAttribute("Type", view.ViewType));
+                var rowLimitElement = new XElement("RowLimit");
+                rowLimitElement.Add(new XAttribute("Paged", view.Paged ? "true" : "false"));
+                rowLimitElement.SetValue(view.RowLimit);
+                xElement.Add(rowLimitElement);
+
+                var viewFieldsElement = new XElement("ViewFields");
+                foreach (var viewField in view.ViewFields)
+                {
+                    var fieldRefElement = new XElement("FieldRef");
+                    fieldRefElement.Add(new XAttribute("Name", viewField.Name));
+                    viewFieldsElement.Add(fieldRefElement);
+                }
+                xElement.Add(viewFieldsElement);
+
+                var queryElement = new XElement("Query");
+
+                if (view.Query != null)
+                {
+                    var innerQueryElement = XElement.Parse(string.Format("<Query>{0}</Query>", view.Query));
+                    foreach (var qe in innerQueryElement.Elements())
+                    {
+                        queryElement.Add(qe);
+                    }
+                    xElement.Add(queryElement);
+                }
+
+                var doc = new XmlDocument();
+                using (var elReader = xElement.CreateReader())
+                {
+                    doc.Load(elReader);
+                    viewElements.Add(doc.DocumentElement);
+                }
+            }
+
+            return viewElements.ToArray();
+        }
+
         public ProvisioningTemplate ToProvisioningTemplate(Stream template)
         {
             return (this.ToProvisioningTemplate(template, null));
@@ -575,13 +623,6 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                     result.ContentTypes.Add(ct);
 
                 }
-
-                //result.ContentTypes.AddRange(
-                //    from contentType in source.ContentTypes.Any
-                //    select new ContentType
-                //    {
-                //        SchemaXml = contentType.OuterXml,
-                //    });
             }
 
             // Translate Lists Instances, if any
@@ -597,12 +638,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                                      ContentTypeId = contentTypeBinding.ContentTypeID,
                                      Default = contentTypeBinding.Default,
                                  }) : null),
-                        (list.Views != null ?
-                                (from view in list.Views.Any
-                                 select new View
-                                 {
-                                     SchemaXml = view.OuterXml,
-                                 }) : null),
+                        list.Views != null ? ConvertToModelViews(list.Views.Any) : null,
                         (list.Fields != null ?
                                 (from field in list.Fields.Any
                                  select new Field
@@ -744,6 +780,72 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             }
 
             return (result);
+        }
+
+        private List<View> ConvertToModelViews(XmlElement[] elements)
+        {
+            List<View> views = new List<View>();
+            foreach (var element in elements)
+            {
+                var viewElement = XElement.Parse(element.OuterXml);
+
+                var displayNameXml = viewElement.Attribute("DisplayName");
+                if (displayNameXml == null)
+                {
+                    throw new ApplicationException("Invalid View element, missing a valid value for the attribute DisplayName.");
+                }
+                var viewTitle = displayNameXml.Value;
+
+                // Type
+                var viewTypeString = viewElement.Attribute("Type") != null ? viewElement.Attribute("Type").Value : "None";
+                viewTypeString = viewTypeString[0].ToString().ToUpper() + viewTypeString.Substring(1).ToLower();
+                var viewType = (ViewType)Enum.Parse(typeof(ViewType), viewTypeString);
+
+                // Fields
+                List<FieldRef> viewFields = null;
+                var viewFieldsElement = viewElement.Descendants("ViewFields").FirstOrDefault();
+                if (viewFieldsElement != null)
+                {
+                    viewFields = (from field in viewElement.Descendants("ViewFields").Descendants("FieldRef") select new FieldRef(field.Attribute("Name").Value)).ToList();
+                }
+
+                // Default view
+                var viewDefault = viewElement.Attribute("DefaultView") != null && Boolean.Parse(viewElement.Attribute("DefaultView").Value);
+
+                // Row limit
+                bool viewPaged = true;
+                uint viewRowLimit = 30;
+                var rowLimitElement = viewElement.Descendants("RowLimit").FirstOrDefault();
+                if (rowLimitElement != null)
+                {
+                    if (rowLimitElement.Attribute("Paged") != null)
+                    {
+                        viewPaged = bool.Parse(rowLimitElement.Attribute("Paged").Value);
+                    }
+                    viewRowLimit = uint.Parse(rowLimitElement.Value);
+                }
+
+                // Query
+                var viewQuery = new StringBuilder();
+                foreach (var queryElement in viewElement.Descendants("Query").Elements())
+                {
+                    viewQuery.Append(queryElement.ToString());
+                }
+                View view = new View(viewFields);
+                view.DisplayName = viewTitle;
+                view.DefaultView = viewDefault;
+                view.ViewType = viewType;
+                view.Paged = viewPaged;
+                view.RowLimit = (int)viewRowLimit;
+                if (!string.IsNullOrEmpty(viewQuery.ToString()))
+                {
+                    view.Query = viewQuery.ToString();
+                }
+
+                views.Add(view);
+            }
+
+            return views;
         }
     }
 }

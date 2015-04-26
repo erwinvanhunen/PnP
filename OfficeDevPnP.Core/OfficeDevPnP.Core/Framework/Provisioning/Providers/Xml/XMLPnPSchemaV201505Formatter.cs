@@ -1,5 +1,4 @@
-﻿using OfficeDevPnP.Core.Framework.Provisioning.Model;
-using OfficeDevPnP.Core.Utilities;
+﻿using OfficeDevPnP.Core.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,8 +11,12 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using Microsoft.SharePoint.Client;
 using OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml.V201505;
 using ContentType = OfficeDevPnP.Core.Framework.Provisioning.Model.ContentType;
+using Field = OfficeDevPnP.Core.Framework.Provisioning.Model.Field;
+using ViewType = Microsoft.SharePoint.Client.ViewType;
+using OfficeDevPnP.Core.Framework.Provisioning.Model;
 
 namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
 {
@@ -262,13 +265,34 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                                  Default = contentTypeBinding.Default,
                              }).ToArray() : null,
                          Views = list.Views.Count > 0 ?
-                         new V201505.ListInstanceViews
-                         {
-                             Any =
-                                (from view in list.Views
-                                 select view.SchemaXml.ToXmlElement()).ToArray(),
-                             RemoveExistingViews = list.RemoveExistingViews,
-                         } : null,
+                                new ListInstanceViews()
+                                {
+                                    View = (from view in list.Views
+                                            select new V201505.View
+                                            {
+                                                DefaultView = view.DefaultView,
+                                                ViewType = view.ViewType.FromSDKViewTypeToSchemaViewType(),
+                                                DisplayName = view.DisplayName,
+                                                Query = view.Query != null ? (new ViewQuery()
+                                                {
+                                                    Any = ConvertQueryToXmlElementArray(view.Query)
+                                                }) : null,
+                                                RowLimit = new ViewRowLimit()
+                                                {
+                                                    Paged = view.Paged,
+                                                    Text = new[]
+                                                    {
+                                                        view.RowLimit.ToString()
+                                                    }
+                                                },
+                                                ViewFields = view.ViewFields.Count > 0 ? (from fieldRef in view.ViewFields
+                                                                                          select new V201505.ViewFieldRef
+                                                                                          {
+                                                                                              Name = fieldRef.Name
+                                                                                          }).ToArray() : null
+
+                                            }).ToArray()
+                                } : null,
                          Fields = list.Fields.Count > 0 ?
                          new V201505.ListInstanceFields
                          {
@@ -413,29 +437,29 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (template.Files != null && template.Files.Count > 0)
             {
                 result.Files =
-                    (from file in template.Files
-                     select new V201505.File
-                     {
-                         Overwrite = file.Overwrite,
-                         Src = file.Src,
-                         Folder = file.Folder,
-                         WebParts = file.WebParts.Count > 0 ?
-                            (from wp in file.WebParts
-                             select new V201505.WebPartPageWebPart
-                             {
-                                 Zone = wp.Zone,
-                                 Order = (int)wp.Order,
-                                 Contents = wp.Contents,
-                                 Title = wp.Title,
-                             }).ToArray() : null,
-                         Properties = file.Properties != null && file.Properties.Count > 0 ?
-                            (from p in file.Properties
-                             select new V201505.StringDictionaryItem
-                             {
-                                 Key = p.Key,
-                                 Value = p.Value
-                             }).ToArray() : null
-                     }).ToArray();
+                (from file in template.Files
+                 select new V201505.File
+             {
+                 Overwrite = file.Overwrite,
+                 Src = file.Src,
+                 Folder = file.Folder,
+                 WebParts = file.WebParts.Count > 0 ?
+                 (from wp in file.WebParts
+                  select new V201505.WebPartPageWebPart
+              {
+                  Zone = wp.Zone,
+                  Order = (int)wp.Order,
+                  Contents = wp.Contents,
+                  Title = wp.Title,
+              }).ToArray() : null,
+                 Properties = file.Properties != null && file.Properties.Count > 0 ?
+                 (from p in file.Properties
+                  select new V201505.StringDictionaryItem
+              {
+                  Key = p.Key,
+                  Value = p.Value
+              }).ToArray() : null
+             }).ToArray();
             }
             else
             {
@@ -485,14 +509,14 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                     schemaPage.Overwrite = page.Overwrite;
 
                     schemaPage.WebParts = page.WebParts.Count > 0 ?
-                        (from wp in page.WebParts
-                         select new V201505.WikiPageWebPart
-                         {
-                             Column = (int)wp.Column,
-                             Row = (int)wp.Row,
-                             Contents = wp.Contents,
-                             Title = wp.Title,
-                         }).ToArray() : null;
+                    (from wp in page.WebParts
+                     select new V201505.WikiPageWebPart
+                 {
+                     Column = (int)wp.Column,
+                     Row = (int)wp.Row,
+                     Contents = wp.Contents,
+                     Title = wp.Title,
+                 }).ToArray() : null;
 
                     schemaPage.Url = page.Url;
 
@@ -508,33 +532,33 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (template.TermGroups != null && template.TermGroups.Count > 0)
             {
                 result.TermGroups =
-                    (from grp in template.TermGroups
-                     select new V201505.TermGroup
-                     {
-                         Name = grp.Name,
-                         ID = grp.Id.ToString(),
-                         Description = grp.Description,
-                         TermSets = (
-                            from termSet in grp.TermSets
-                            select new V201505.TermSet
-                            {
-                                ID = termSet.Id.ToString(),
-                                Name = termSet.Name,
-                                IsAvailableForTagging = termSet.IsAvailableForTagging,
-                                IsOpenForTermCreation = termSet.IsOpenForTermCreation,
-                                Description = termSet.Description,
-                                Language = termSet.Language.HasValue ? termSet.Language.Value : 0,
-                                LanguageSpecified = termSet.Language.HasValue,
-                                Terms = termSet.Terms.FromModelTermsToSchemaTerms(),
-                                CustomProperties = termSet.Properties.Count > 0 ?
-                                     (from p in termSet.Properties
-                                      select new V201505.StringDictionaryItem
-                                      {
-                                          Key = p.Key,
-                                          Value = p.Value
-                                      }).ToArray() : null,
-                            }).ToArray(),
-                     }).ToArray();
+                (from grp in template.TermGroups
+                 select new V201505.TermGroup
+             {
+                 Name = grp.Name,
+                 ID = grp.Id.ToString(),
+                 Description = grp.Description,
+                 TermSets = (
+                 from termSet in grp.TermSets
+                 select new V201505.TermSet
+             {
+                 ID = termSet.Id.ToString(),
+                 Name = termSet.Name,
+                 IsAvailableForTagging = termSet.IsAvailableForTagging,
+                 IsOpenForTermCreation = termSet.IsOpenForTermCreation,
+                 Description = termSet.Description,
+                 Language = termSet.Language.HasValue ? termSet.Language.Value : 0,
+                 LanguageSpecified = termSet.Language.HasValue,
+                 Terms = termSet.Terms.FromModelTermsToSchemaTerms(),
+                 CustomProperties = termSet.Properties.Count > 0 ?
+                 (from p in termSet.Properties
+                  select new V201505.StringDictionaryItem
+              {
+                  Key = p.Key,
+                  Value = p.Value
+              }).ToArray() : null,
+             }).ToArray(),
+             }).ToArray();
             }
             #endregion
 
@@ -543,17 +567,17 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (template.ComposedLook != null)
             {
                 result.ComposedLook = new V201505.ComposedLook
-                {
-                    AlternateCSS = template.ComposedLook.AlternateCSS,
-                    BackgroundFile = template.ComposedLook.BackgroundFile,
-                    ColorFile = template.ComposedLook.ColorFile,
-                    FontFile = template.ComposedLook.FontFile,
-                    MasterPage = template.ComposedLook.MasterPage,
-                    Name = template.ComposedLook.Name,
-                    SiteLogo = template.ComposedLook.SiteLogo,
-                    Version = template.ComposedLook.Version,
-                    VersionSpecified = true,
-                };
+            {
+                AlternateCSS = template.ComposedLook.AlternateCSS,
+                BackgroundFile = template.ComposedLook.BackgroundFile,
+                ColorFile = template.ComposedLook.ColorFile,
+                FontFile = template.ComposedLook.FontFile,
+                MasterPage = template.ComposedLook.MasterPage,
+                Name = template.ComposedLook.Name,
+                SiteLogo = template.ComposedLook.SiteLogo,
+                Version = template.ComposedLook.Version,
+                VersionSpecified = true,
+            };
             }
             #endregion
 
@@ -562,13 +586,13 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (template.Providers != null && template.Providers.Count > 0)
             {
                 result.Providers =
-                    (from provider in template.Providers
-                     select new V201505.Provider
-                     {
-                         HandlerType = String.Format("{0}, {1}", provider.Type, provider.Assembly),
-                         Configuration = provider.Configuration != null ? provider.Configuration.ToXmlNode() : null,
-                         Enabled = provider.Enabled,
-                     }).ToArray();
+                (from provider in template.Providers
+                 select new V201505.Provider
+             {
+                 HandlerType = String.Format("{0}, {1}", provider.Type, provider.Assembly),
+                 Configuration = provider.Configuration != null ? provider.Configuration.ToXmlNode() : null,
+                 Enabled = provider.Enabled,
+             }).ToArray();
             }
             else
             {
@@ -577,13 +601,39 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             #endregion
 
             XmlSerializerNamespaces ns =
-                new XmlSerializerNamespaces();
+            new XmlSerializerNamespaces();
             ns.Add(((IXMLSchemaFormatter)this).NamespacePrefix,
-                ((IXMLSchemaFormatter)this).NamespaceUri);
+            ((IXMLSchemaFormatter)this).NamespaceUri);
 
             var output = XMLSerializer.SerializeToStream<V201505.Provisioning>(wrappedResult, ns);
             output.Position = 0;
             return (output);
+        }
+
+        private XmlElement[] ConvertQueryToXmlElementArray(string query)
+        {
+            List<XmlElement> xmlElements = new List<XmlElement>();
+            XElement queryElement = XElement.Parse(string.Format("<Query>{0}</Query>", query));
+
+            foreach (var element in queryElement.Elements())
+            {
+                xmlElements.Add(element.ToXmlElement());
+            }
+            return xmlElements.ToArray();
+        }
+
+        private string ConvertXmlElementArrayToString(XmlElement[] elements)
+        {
+            if (elements == null)
+            {
+                return null;
+            }
+            StringBuilder builder = new StringBuilder();
+            foreach (var element in elements)
+            {
+                builder.Append(element.OuterXml);
+            }
+            return builder.ToString();
         }
 
         public Model.ProvisioningTemplate ToProvisioningTemplate(Stream template)
@@ -628,8 +678,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
 
                 // Handle the wrapper schema parameters
                 if (wrappedResult.Preferences != null &&
-                    wrappedResult.Preferences.Parameters != null &&
-                    wrappedResult.Preferences.Parameters.Length > 0)
+                wrappedResult.Preferences.Parameters != null &&
+                wrappedResult.Preferences.Parameters.Length > 0)
                 {
                     foreach (var parameter in wrappedResult.Preferences.Parameters)
                     {
@@ -673,8 +723,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
 
                 // If there is a provided ID, and if it doesn't equal the current ID
                 if (!String.IsNullOrEmpty(identifier) &&
-                    IdAttribute != null &&
-                    IdAttribute.Value != identifier)
+                IdAttribute != null &&
+                IdAttribute.Value != identifier)
                 {
                     // TODO: Use resource file
                     throw new ApplicationException("The provided template identifier is not available!");
@@ -697,12 +747,12 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (source.PropertyBagEntries != null)
             {
                 result.PropertyBagEntries.AddRange(
-                    from bag in source.PropertyBagEntries
-                    select new Model.PropertyBagEntry
-                    {
-                        Key = bag.Key,
-                        Value = bag.Value,
-                    });
+                from bag in source.PropertyBagEntries
+                select new Model.PropertyBagEntry
+            {
+                Key = bag.Key,
+                Value = bag.Value,
+            });
             }
             #endregion
 
@@ -715,36 +765,36 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                     result.Security.AdditionalAdministrators.AddRange(
                     from user in source.Security.AdditionalAdministrators
                     select new Model.User
-                    {
-                        Name = user.Name,
-                    });
+                {
+                    Name = user.Name,
+                });
                 }
                 if (source.Security.AdditionalOwners != null)
                 {
                     result.Security.AdditionalOwners.AddRange(
                     from user in source.Security.AdditionalOwners
                     select new Model.User
-                    {
-                        Name = user.Name,
-                    });
+                {
+                    Name = user.Name,
+                });
                 }
                 if (source.Security.AdditionalMembers != null)
                 {
                     result.Security.AdditionalMembers.AddRange(
                     from user in source.Security.AdditionalMembers
                     select new Model.User
-                    {
-                        Name = user.Name,
-                    });
+                {
+                    Name = user.Name,
+                });
                 }
                 if (source.Security.AdditionalVisitors != null)
                 {
                     result.Security.AdditionalVisitors.AddRange(
                     from user in source.Security.AdditionalVisitors
                     select new Model.User
-                    {
-                        Name = user.Name,
-                    });
+                {
+                    Name = user.Name,
+                });
                 }
             }
             #endregion
@@ -754,11 +804,11 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if ((source.SiteFields != null) && (source.SiteFields.Any != null))
             {
                 result.SiteFields.AddRange(
-                    from field in source.SiteFields.Any
-                    select new Field
-                    {
-                        SchemaXml = field.OuterXml,
-                    });
+                from field in source.SiteFields.Any
+                select new Field
+            {
+                SchemaXml = field.OuterXml,
+            });
             }
             #endregion
 
@@ -767,28 +817,28 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if ((source.ContentTypes != null) && (source.ContentTypes != null))
             {
                 result.ContentTypes.AddRange(
-                    from contentType in source.ContentTypes
-                    select new ContentType(
-                        contentType.ID,
-                        contentType.Name,
-                        contentType.Description,
-                        contentType.Group,
-                        contentType.Sealed,
-                        contentType.Hidden,
-                        contentType.ReadOnly,
-                        (contentType.DocumentTemplate != null ?
-                            contentType.DocumentTemplate.TargetName : null),
-                        contentType.Overwrite,
-                        (contentType.FieldRefs != null ?
-                            (from fieldRef in contentType.FieldRefs
-                             select new Model.FieldRef(fieldRef.Name)
-                             {
-                                 Id = Guid.Parse(fieldRef.ID),
-                                 Hidden = fieldRef.Hidden,
-                                 Required = fieldRef.Required
-                             }) : null)
-                        )
-                    );
+                from contentType in source.ContentTypes
+                select new ContentType(
+                contentType.ID,
+                contentType.Name,
+                contentType.Description,
+                contentType.Group,
+                contentType.Sealed,
+                contentType.Hidden,
+                contentType.ReadOnly,
+                (contentType.DocumentTemplate != null ?
+                contentType.DocumentTemplate.TargetName : null),
+                contentType.Overwrite,
+                (contentType.FieldRefs != null ?
+                (from fieldRef in contentType.FieldRefs
+                 select new Model.FieldRef(fieldRef.Name)
+             {
+                 Id = Guid.Parse(fieldRef.ID),
+                 Hidden = fieldRef.Hidden,
+                 Required = fieldRef.Required
+             }) : null)
+                )
+                );
             }
             #endregion
 
@@ -797,63 +847,67 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (source.Lists != null)
             {
                 result.Lists.AddRange(
-                    from list in source.Lists
-                    select new Model.ListInstance(
-                        (list.ContentTypeBindings != null ?
-                                (from contentTypeBinding in list.ContentTypeBindings
-                                 select new Model.ContentTypeBinding
-                                 {
-                                     ContentTypeId = contentTypeBinding.ContentTypeID,
-                                     Default = contentTypeBinding.Default,
-                                 }) : null),
-                        (list.Views != null ?
-                                (from view in list.Views.Any
-                                 select new View
-                                 {
-                                     SchemaXml = view.OuterXml,
-                                 }) : null),
-                        (list.Fields != null ?
-                                (from field in list.Fields.Any
-                                 select new Field
-                                 {
-                                     SchemaXml = field.OuterXml,
-                                 }) : null),
-                        (list.FieldRefs != null ?
-                                 (from fieldRef in list.FieldRefs
-                                  select new Model.FieldRef(fieldRef.Name)
-                                  {
-                                      DisplayName = fieldRef.DisplayName,
-                                      Hidden = fieldRef.Hidden,
-                                      Required = fieldRef.Required,
-                                      Id = Guid.Parse(fieldRef.ID)
-                                  }) : null),
-                        (list.DataRows != null ?
-                                 (from dataRow in list.DataRows
-                                  select new Model.DataRow(
-                                     (from dataValue in dataRow
-                                      select dataValue).ToDictionary(k => k.FieldName, v => v.Value)
-                                  )).ToList() : null)
-                        )
-                    {
-                        ContentTypesEnabled = list.ContentTypesEnabled,
-                        Description = list.Description,
-                        DocumentTemplate = list.DocumentTemplate,
-                        EnableVersioning = list.EnableVersioning,
-                        EnableMinorVersions = list.EnableMinorVersions,
-                        EnableModeration = list.EnableModeration,
-                        Hidden = list.Hidden,
-                        MinorVersionLimit = list.MinorVersionLimitSpecified ? list.MinorVersionLimit : 0,
-                        MaxVersionLimit = list.MaxVersionLimitSpecified ? list.MaxVersionLimit : 0,
-                        OnQuickLaunch = list.OnQuickLaunch,
-                        EnableAttachments = list.EnableAttachments,
-                        EnableFolderCreation = list.EnableFolderCreation,
-                        RemoveExistingContentTypes = list.RemoveExistingContentTypes,
-                        TemplateFeatureID = !String.IsNullOrEmpty(list.TemplateFeatureID) ? Guid.Parse(list.TemplateFeatureID) : Guid.Empty,
-                        RemoveExistingViews = list.Views != null ? list.Views.RemoveExistingViews : false,
-                        TemplateType = list.TemplateType,
-                        Title = list.Title,
-                        Url = list.Url,
-                    });
+                from list in source.Lists
+                select new Model.ListInstance(
+                (list.ContentTypeBindings != null ?
+                (from contentTypeBinding in list.ContentTypeBindings
+                 select new Model.ContentTypeBinding
+             {
+                 ContentTypeId = contentTypeBinding.ContentTypeID,
+                 Default = contentTypeBinding.Default,
+             }) : null),
+                (list.Views != null ?
+                (from view in list.Views.View
+                 select new OfficeDevPnP.Core.Framework.Provisioning.Model.View((from f in view.ViewFields select new FieldRef(f.Name)).ToList())
+             {
+                 DisplayName = view.DisplayName,
+                 RowLimit = int.Parse(view.RowLimit.Text[0]),
+                 DefaultView = view.DefaultView,
+                 Paged = view.RowLimit.Paged,
+                 Query = view.Query != null ? ConvertXmlElementArrayToString(view.Query.Any) : null,
+             }) : null),
+                (list.Fields != null ?
+                (from field in list.Fields.Any
+                 select new Field
+             {
+                 SchemaXml = field.OuterXml,
+             }) : null),
+                (list.FieldRefs != null ?
+                (from fieldRef in list.FieldRefs
+                 select new Model.FieldRef(fieldRef.Name)
+             {
+                 DisplayName = fieldRef.DisplayName,
+                 Hidden = fieldRef.Hidden,
+                 Required = fieldRef.Required,
+                 Id = Guid.Parse(fieldRef.ID)
+             }) : null),
+                (list.DataRows != null ?
+                (from dataRow in list.DataRows
+                 select new Model.DataRow(
+                 (from dataValue in dataRow
+                  select dataValue).ToDictionary(k => k.FieldName, v => v.Value)
+                 )).ToList() : null)
+                )
+            {
+                ContentTypesEnabled = list.ContentTypesEnabled,
+                Description = list.Description,
+                DocumentTemplate = list.DocumentTemplate,
+                EnableVersioning = list.EnableVersioning,
+                EnableMinorVersions = list.EnableMinorVersions,
+                EnableModeration = list.EnableModeration,
+                Hidden = list.Hidden,
+                MinorVersionLimit = list.MinorVersionLimitSpecified ? list.MinorVersionLimit : 0,
+                MaxVersionLimit = list.MaxVersionLimitSpecified ? list.MaxVersionLimit : 0,
+                OnQuickLaunch = list.OnQuickLaunch,
+                EnableAttachments = list.EnableAttachments,
+                EnableFolderCreation = list.EnableFolderCreation,
+                RemoveExistingContentTypes = list.RemoveExistingContentTypes,
+                TemplateFeatureID = !String.IsNullOrEmpty(list.TemplateFeatureID) ? Guid.Parse(list.TemplateFeatureID) : Guid.Empty,
+                RemoveExistingViews = list.Views != null ? list.Views.RemoveExistingViews : false,
+                TemplateType = list.TemplateType,
+                Title = list.Title,
+                Url = list.Url,
+            });
             }
             #endregion
 
@@ -864,22 +918,22 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                 if (result.Features.SiteFeatures != null && source.Features.SiteFeatures != null)
                 {
                     result.Features.SiteFeatures.AddRange(
-                        from feature in source.Features.SiteFeatures
-                        select new Model.Feature
-                        {
-                            Id = new Guid(feature.ID),
-                            Deactivate = feature.Deactivate,
-                        });
+                    from feature in source.Features.SiteFeatures
+                    select new Model.Feature
+                {
+                    Id = new Guid(feature.ID),
+                    Deactivate = feature.Deactivate,
+                });
                 }
                 if (result.Features.WebFeatures != null && source.Features.WebFeatures != null)
                 {
                     result.Features.WebFeatures.AddRange(
-                        from feature in source.Features.WebFeatures
-                        select new Model.Feature
-                        {
-                            Id = new Guid(feature.ID),
-                            Deactivate = feature.Deactivate,
-                        });
+                    from feature in source.Features.WebFeatures
+                    select new Model.Feature
+                {
+                    Id = new Guid(feature.ID),
+                    Deactivate = feature.Deactivate,
+                });
                 }
             }
             #endregion
@@ -891,42 +945,42 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                 if (result.CustomActions.SiteCustomActions != null && source.CustomActions.SiteCustomActions != null)
                 {
                     result.CustomActions.SiteCustomActions.AddRange(
-                        from customAction in source.CustomActions.SiteCustomActions
-                        select new Model.CustomAction
-                        {
-                            Description = customAction.Description,
-                            Enabled = customAction.Enabled,
-                            Group = customAction.Group,
-                            ImageUrl = customAction.ImageUrl,
-                            Location = customAction.Location,
-                            Name = customAction.Name,
-                            RightsValue = customAction.RightsSpecified ? customAction.Rights : 0,
-                            ScriptBlock = customAction.ScriptBlock,
-                            ScriptSrc = customAction.ScriptSrc,
-                            Sequence = customAction.SequenceSpecified ? customAction.Sequence : 100,
-                            Title = customAction.Title,
-                            Url = customAction.Url,
-                        });
+                    from customAction in source.CustomActions.SiteCustomActions
+                    select new Model.CustomAction
+                {
+                    Description = customAction.Description,
+                    Enabled = customAction.Enabled,
+                    Group = customAction.Group,
+                    ImageUrl = customAction.ImageUrl,
+                    Location = customAction.Location,
+                    Name = customAction.Name,
+                    RightsValue = customAction.RightsSpecified ? customAction.Rights : 0,
+                    ScriptBlock = customAction.ScriptBlock,
+                    ScriptSrc = customAction.ScriptSrc,
+                    Sequence = customAction.SequenceSpecified ? customAction.Sequence : 100,
+                    Title = customAction.Title,
+                    Url = customAction.Url,
+                });
                 }
                 if (result.CustomActions.WebCustomActions != null && source.CustomActions.WebCustomActions != null)
                 {
                     result.CustomActions.WebCustomActions.AddRange(
-                        from customAction in source.CustomActions.WebCustomActions
-                        select new Model.CustomAction
-                        {
-                            Description = customAction.Description,
-                            Enabled = customAction.Enabled,
-                            Group = customAction.Group,
-                            ImageUrl = customAction.ImageUrl,
-                            Location = customAction.Location,
-                            Name = customAction.Name,
-                            RightsValue = customAction.RightsSpecified ? customAction.Rights : 0,
-                            ScriptBlock = customAction.ScriptBlock,
-                            ScriptSrc = customAction.ScriptSrc,
-                            Sequence = customAction.SequenceSpecified ? customAction.Sequence : 100,
-                            Title = customAction.Title,
-                            Url = customAction.Url,
-                        });
+                    from customAction in source.CustomActions.WebCustomActions
+                    select new Model.CustomAction
+                {
+                    Description = customAction.Description,
+                    Enabled = customAction.Enabled,
+                    Group = customAction.Group,
+                    ImageUrl = customAction.ImageUrl,
+                    Location = customAction.Location,
+                    Name = customAction.Name,
+                    RightsValue = customAction.RightsSpecified ? customAction.Rights : 0,
+                    ScriptBlock = customAction.ScriptBlock,
+                    ScriptSrc = customAction.ScriptSrc,
+                    Sequence = customAction.SequenceSpecified ? customAction.Sequence : 100,
+                    Title = customAction.Title,
+                    Url = customAction.Url,
+                });
                 }
             }
             #endregion
@@ -936,22 +990,22 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (source.Files != null)
             {
                 result.Files.AddRange(
-                    from file in source.Files
-                    select new Model.File(file.Src,
-                        file.Folder,
-                        file.Overwrite,
-                        file.WebParts != null ?
-                            (from wp in file.WebParts
-                             select new Model.WebPart
-                                 {
-                                     Order = (uint)wp.Order,
-                                     Zone = wp.Zone,
-                                     Title = wp.Title,
-                                     Contents = wp.Contents
-                                 }) : null,
-                        file.Properties != null ? file.Properties.ToDictionary(k => k.Key, v => v.Value) : null
-                        )
-                    );
+                from file in source.Files
+                select new Model.File(file.Src,
+                file.Folder,
+                file.Overwrite,
+                file.WebParts != null ?
+                (from wp in file.WebParts
+                 select new Model.WebPart
+             {
+                 Order = (uint)wp.Order,
+                 Zone = wp.Zone,
+                 Title = wp.Title,
+                 Contents = wp.Contents
+             }) : null,
+                file.Properties != null ? file.Properties.ToDictionary(k => k.Key, v => v.Value) : null
+                )
+                );
             }
             #endregion
 
@@ -992,16 +1046,16 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                     }
 
                     result.Pages.Add(new Model.Page(page.Url, page.Overwrite, pageLayout,
-                        (page.WebParts != null ?
-                            (from wp in page.WebParts
-                             select new Model.WebPart
-                             {
-                                 Title = wp.Title,
-                                 Column = (uint)wp.Column,
-                                 Row = (uint)wp.Row,
-                                 Contents = wp.Contents
+                    (page.WebParts != null ?
+                    (from wp in page.WebParts
+                     select new Model.WebPart
+                 {
+                     Title = wp.Title,
+                     Column = (uint)wp.Column,
+                     Row = (uint)wp.Row,
+                     Contents = wp.Contents
 
-                             }).ToList() : null)));
+                 }).ToList() : null)));
 
                 }
             }
@@ -1012,27 +1066,27 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
             if (source.TermGroups != null)
             {
                 result.TermGroups.AddRange(
-                    from termGroup in source.TermGroups
-                    select new Model.TermGroup(
-                        !string.IsNullOrEmpty(termGroup.ID) ? Guid.Parse(termGroup.ID) : Guid.Empty,
-                        termGroup.Name,
-                        new List<Model.TermSet>(
-                            from termSet in termGroup.TermSets
-                            select new Model.TermSet(
-                                !string.IsNullOrEmpty(termSet.ID) ? Guid.Parse(termSet.ID) : Guid.Empty,
-                                termSet.Name,
-                                termSet.LanguageSpecified ? (int?)termSet.Language : null,
-                                termSet.IsAvailableForTagging,
-                                termSet.IsOpenForTermCreation,
-                                termSet.Terms.FromSchemaTermsToModelTerms(),
-                                termSet.CustomProperties != null ? termSet.CustomProperties.ToDictionary(k => k.Key, v => v.Value) : null)
-                            {
-                                Description = termSet.Description,
-                            })
-                        )
-                        {
-                            Description = termGroup.Description,
-                        });
+                from termGroup in source.TermGroups
+                select new Model.TermGroup(
+                !string.IsNullOrEmpty(termGroup.ID) ? Guid.Parse(termGroup.ID) : Guid.Empty,
+                termGroup.Name,
+                new List<Model.TermSet>(
+                from termSet in termGroup.TermSets
+                select new Model.TermSet(
+                !string.IsNullOrEmpty(termSet.ID) ? Guid.Parse(termSet.ID) : Guid.Empty,
+                termSet.Name,
+                termSet.LanguageSpecified ? (int?)termSet.Language : null,
+                termSet.IsAvailableForTagging,
+                termSet.IsOpenForTermCreation,
+                termSet.Terms.FromSchemaTermsToModelTerms(),
+                termSet.CustomProperties != null ? termSet.CustomProperties.ToDictionary(k => k.Key, v => v.Value) : null)
+            {
+                Description = termSet.Description,
+            })
+                )
+            {
+                Description = termGroup.Description,
+            });
             }
             #endregion
 
@@ -1063,13 +1117,13 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                         if (handlerType != null)
                         {
                             result.Providers.Add(
-                                new Model.Provider
-                                {
-                                    Assembly = handlerType.AssemblyQualifiedName,
-                                    Type = handlerType.FullName,
-                                    Configuration = provider.Configuration != null ? provider.Configuration.ToProviderConfiguration() : null,
-                                    Enabled = provider.Enabled,
-                                });
+                            new Model.Provider
+                        {
+                            Assembly = handlerType.AssemblyQualifiedName,
+                            Type = handlerType.FullName,
+                            Configuration = provider.Configuration != null ? provider.Configuration.ToProviderConfiguration() : null,
+                            Enabled = provider.Enabled,
+                        });
                         }
                     }
                 }
@@ -1080,46 +1134,53 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
         }
     }
 
+    internal static class ViewTypeExtensions
+    {
+        public static V201505.ViewType FromSDKViewTypeToSchemaViewType(this ViewType viewType)
+        {
+            return (V201505.ViewType)Enum.Parse(typeof(V201505.ViewType), viewType.ToString());
+        }
+    }
     internal static class TaxonomyTermExtensions
     {
         public static V201505.Term[] FromModelTermsToSchemaTerms(this List<Model.Term> terms)
         {
             V201505.Term[] result = terms.Count > 0 ? (
-                from term in terms
-                select new V201505.Term
-                {
-                    ID = term.Id.ToString(),
-                    Name = term.Name,
-                    Description = term.Description,
-                    Owner = term.Owner,
-                    LanguageSpecified = term.Language.HasValue,
-                    Language = term.Language.HasValue ? term.Language.Value : 1033,
-                    IsAvailableForTagging = term.IsAvailableForTagging,
-                    CustomSortOrder = term.CustomSortOrder,
-                    Terms = term.Terms.Count > 0 ? new TermTerms { Items = term.Terms.FromModelTermsToSchemaTerms() } : null,
-                    CustomProperties = term.Properties.Count > 0 ?
-                        (from p in term.Properties
-                         select new V201505.StringDictionaryItem
-                         {
-                             Key = p.Key,
-                             Value = p.Value
-                         }).ToArray() : null,
-                    LocalCustomProperties = term.LocalProperties.Count > 0 ?
-                        (from p in term.LocalProperties
-                         select new V201505.StringDictionaryItem
-                         {
-                             Key = p.Key,
-                             Value = p.Value
-                         }).ToArray() : null,
-                    Labels = term.Labels.Count > 0 ?
-                        (from l in term.Labels
-                         select new V201505.TermLabelsLabel
-                         {
-                             Language = l.Language,
-                             IsDefaultForLanguage = l.IsDefaultForLanguage,
-                             Value = l.Value,
-                         }).ToArray() : null,
-                }).ToArray() : null;
+            from term in terms
+            select new V201505.Term
+        {
+            ID = term.Id.ToString(),
+            Name = term.Name,
+            Description = term.Description,
+            Owner = term.Owner,
+            LanguageSpecified = term.Language.HasValue,
+            Language = term.Language.HasValue ? term.Language.Value : 1033,
+            IsAvailableForTagging = term.IsAvailableForTagging,
+            CustomSortOrder = term.CustomSortOrder,
+            Terms = term.Terms.Count > 0 ? new TermTerms { Items = term.Terms.FromModelTermsToSchemaTerms() } : null,
+            CustomProperties = term.Properties.Count > 0 ?
+            (from p in term.Properties
+             select new V201505.StringDictionaryItem
+         {
+             Key = p.Key,
+             Value = p.Value
+         }).ToArray() : null,
+            LocalCustomProperties = term.LocalProperties.Count > 0 ?
+            (from p in term.LocalProperties
+             select new V201505.StringDictionaryItem
+         {
+             Key = p.Key,
+             Value = p.Value
+         }).ToArray() : null,
+            Labels = term.Labels.Count > 0 ?
+            (from l in term.Labels
+             select new V201505.TermLabelsLabel
+         {
+             Language = l.Language,
+             IsDefaultForLanguage = l.IsDefaultForLanguage,
+             Value = l.Value,
+         }).ToArray() : null,
+        }).ToArray() : null;
 
             return (result);
         }
@@ -1127,31 +1188,31 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
         public static List<Model.Term> FromSchemaTermsToModelTerms(this V201505.Term[] terms)
         {
             List<Model.Term> result = new List<Model.Term>(
-                from term in terms
-                select new Model.Term(
-                    !string.IsNullOrEmpty(term.ID) ? Guid.Parse(term.ID) : Guid.Empty,
-                    term.Name,
-                    term.LanguageSpecified ? term.Language : (int?)null,
-                    (term.Terms != null && term.Terms.Items != null) ? term.Terms.Items.FromSchemaTermsToModelTerms() : null,
-                    term.Labels != null ?
-                    (new List<Model.TermLabel>(
-                        from label in term.Labels
-                        select new Model.TermLabel
-                        {
-                            Language = label.Language,
-                            Value = label.Value,
-                            IsDefaultForLanguage = label.IsDefaultForLanguage
-                        }
-                    )) : null,
-                    term.CustomProperties != null ? term.CustomProperties.ToDictionary(k => k.Key, v => v.Value) : null,
-                    term.LocalCustomProperties != null ? term.LocalCustomProperties.ToDictionary(k => k.Key, v => v.Value) : null
-                    )
-                    {
-                        CustomSortOrder = term.CustomSortOrder,
-                        IsAvailableForTagging = term.IsAvailableForTagging,
-                        Owner = term.Owner,
-                    }
-                );
+            from term in terms
+            select new Model.Term(
+            !string.IsNullOrEmpty(term.ID) ? Guid.Parse(term.ID) : Guid.Empty,
+            term.Name,
+            term.LanguageSpecified ? term.Language : (int?)null,
+            (term.Terms != null && term.Terms.Items != null) ? term.Terms.Items.FromSchemaTermsToModelTerms() : null,
+            term.Labels != null ?
+            (new List<Model.TermLabel>(
+            from label in term.Labels
+            select new Model.TermLabel
+        {
+            Language = label.Language,
+            Value = label.Value,
+            IsDefaultForLanguage = label.IsDefaultForLanguage
+        }
+            )) : null,
+            term.CustomProperties != null ? term.CustomProperties.ToDictionary(k => k.Key, v => v.Value) : null,
+            term.LocalCustomProperties != null ? term.LocalCustomProperties.ToDictionary(k => k.Key, v => v.Value) : null
+            )
+        {
+            CustomSortOrder = term.CustomSortOrder,
+            IsAvailableForTagging = term.IsAvailableForTagging,
+            Owner = term.Owner,
+        }
+            );
 
             return (result);
         }

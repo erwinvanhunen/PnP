@@ -298,6 +298,7 @@
     <Compile Include="Framework\Provisioning\Deprecated\Model\Term.deprecated.cs" />
     <Compile Include="Framework\Provisioning\Deprecated\Model\TermGroup.deprecated.cs" />
     <Compile Include="Framework\Provisioning\Deprecated\Model\TermSet.deprecated.cs" />
+    <Compile Include="Framework\Provisioning\Deprecated\Model\View.deprecated.cs" />
     <Compile Include="Framework\Provisioning\Extensibility\ExtensibilityManager.cs" />
     <Compile Include="Framework\Provisioning\Extensibility\ExtensiblityPipelineException.cs" />
     <Compile Include="Framework\Provisioning\Extensibility\IProvisioningExtensibilityProvider.cs" />
@@ -502,11 +503,15 @@
     </WebReferenceUrl>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Framework\Provisioning\BaseTemplates\v16\STS0Template.xml" />
+    <EmbeddedResource Include="Framework\Provisioning\BaseTemplates\v16\STS0Template.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <EmbeddedResource Include="Framework\Provisioning\BaseTemplates\v15\STS0Template.xml" />
+    <EmbeddedResource Include="Framework\Provisioning\BaseTemplates\v15\STS0Template.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
