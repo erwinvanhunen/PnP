@@ -744,6 +744,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="JSLink" use="optional" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation xml:lang="en">
+          The JSLink attribute of a view. Optional attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="ViewRowLimit" mixed="true">
@@ -1210,14 +1217,6 @@
       <xsd:annotation>
         <xsd:documentation xml:lang="en">
           The Overwrite flag for the File, optional attribute
-        </xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
-
-    <xsd:attribute name="Create" type="xsd:boolean" use="optional" default="true">
-      <xsd:annotation>
-        <xsd:documentation xml:lang="en">
-          Optional: if set to false the file will not be created. Use to add WebParts to existing WebPart Pages.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

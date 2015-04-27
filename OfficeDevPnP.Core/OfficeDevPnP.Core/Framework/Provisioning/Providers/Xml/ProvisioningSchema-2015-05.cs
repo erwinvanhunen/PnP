@@ -2046,6 +2046,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml.V201505 {
         
         private ViewType viewTypeField;
         
+        private string jSLinkField;
+        
         public View() {
             this.defaultViewField = false;
             this.viewTypeField = ViewType.None;
@@ -2114,6 +2116,17 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml.V201505 {
             }
             set {
                 this.viewTypeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string JSLink {
+            get {
+                return this.jSLinkField;
+            }
+            set {
+                this.jSLinkField = value;
             }
         }
     }
@@ -2624,11 +2637,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml.V201505 {
         
         private bool overwriteField;
         
-        private bool createField;
-        
         public File() {
             this.overwriteField = false;
-            this.createField = true;
         }
         
         /// <remarks/>
@@ -2684,18 +2694,6 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml.V201505 {
             }
             set {
                 this.overwriteField = value;
-            }
-        }
-        
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        [System.ComponentModel.DefaultValueAttribute(true)]
-        public bool Create {
-            get {
-                return this.createField;
-            }
-            set {
-                this.createField = value;
             }
         }
     }

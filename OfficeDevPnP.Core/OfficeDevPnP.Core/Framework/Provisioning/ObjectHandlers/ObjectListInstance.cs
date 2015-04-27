@@ -230,13 +230,17 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                             Paged = view.Paged,
                             Title = view.DisplayName,
                             ViewTypeKind = view.ViewType,
-                            SetAsDefaultView = view.DefaultView
+                            SetAsDefaultView = view.DefaultView,
                         };
                         if (view.Query != null)
                         {
                             viewCI.Query = view.Query;
                         }
-                        createdList.Views.Add(viewCI);
+                        var createdView = createdList.Views.Add(viewCI);
+                        if (!string.IsNullOrEmpty(view.JSLink))
+                        {
+                            createdView.JSLink = view.JSLink;
+                        }
                         createdList.Update();
                         web.Context.ExecuteQueryRetry();
                     }
@@ -306,7 +310,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             web.Context.Load(lists,
                 lc => lc.IncludeWithDefaultProperties(
                     l => l.ContentTypes,
-                    l => l.Views.IncludeWithDefaultProperties(v => v.ViewFields),
+                    l => l.Views.IncludeWithDefaultProperties(v => v.ViewFields, v => v.JSLink),
                     l => l.RootFolder.ServerRelativeUrl,
                     l => l.Fields.IncludeWithDefaultProperties(
                         f => f.Id,
@@ -389,6 +393,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                                 modelView.DefaultView = view.DefaultView;
                                 modelView.Paged = view.Paged;
                                 modelView.RowLimit = (int)view.RowLimit;
+                                modelView.JSLink = view.JSLink;
                                 modelView.Query = view.ViewQuery;
                                 modelView.ViewFields.AddRange(
                                     from viewField in view.ViewFields

@@ -77,6 +77,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Model
         }
 
         #endregion
+
         #region Comparison code
 
         public override int GetHashCode()

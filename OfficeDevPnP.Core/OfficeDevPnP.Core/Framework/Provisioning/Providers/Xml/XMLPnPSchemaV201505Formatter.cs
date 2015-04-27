@@ -273,6 +273,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                                                 DefaultView = view.DefaultView,
                                                 ViewType = view.ViewType.FromSDKViewTypeToSchemaViewType(),
                                                 DisplayName = view.DisplayName,
+                                                JSLink = view.JSLink,
                                                 Query = view.Query != null ? (new ViewQuery()
                                                 {
                                                     Any = ConvertQueryToXmlElementArray(view.Query)
@@ -862,6 +863,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
              {
                  DisplayName = view.DisplayName,
                  RowLimit = int.Parse(view.RowLimit.Text[0]),
+                 JSLink = view.JSLink,
                  DefaultView = view.DefaultView,
                  Paged = view.RowLimit.Paged,
                  Query = view.Query != null ? ConvertXmlElementArrayToString(view.Query.Any) : null,

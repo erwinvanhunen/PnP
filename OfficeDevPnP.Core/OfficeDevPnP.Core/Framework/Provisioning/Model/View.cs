@@ -18,17 +18,22 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Model
         #region Public Properties
 
         public string Name { get; set; }
+
         public string DisplayName { get; set; }
 
         public bool DefaultView { get; set; }
 
         public ViewType ViewType { get; set; }
+
         public List<FieldRef> ViewFields { get { return _viewFields; } private set { _viewFields = value; } }
 
         public string Query { get; set; }
 
         public bool Paged { get { return _paged; } set { _paged = value; } }
+
         public int RowLimit { get { return _rowLimit; } set { _rowLimit = value; } }
+
+        public string JSLink { get; set; }
 
         #endregion
 
