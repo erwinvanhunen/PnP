@@ -713,14 +713,14 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                         f => f.Required)));
 
             web.Context.ExecuteQueryRetry();
-            foreach (var item in lists.Where(l => l.Hidden == false))
+            foreach (var siteList in lists.Where(l => l.Hidden == false))
             {
                 ListInstance baseTemplateList = null;
                 if (creationInfo.BaseTemplate != null)
                 {
                     // Check if we need to skip this list...if so let's do it before we gather all the other information for this list...improves performance
-                    var index = creationInfo.BaseTemplate.Lists.FindIndex(f => f.Url.Equals(item.RootFolder.ServerRelativeUrl.Substring(serverRelativeUrl.Length + 1)) &&
-                                                                               f.TemplateType.Equals(item.BaseTemplate));
+                    var index = creationInfo.BaseTemplate.Lists.FindIndex(f => f.Url.Equals(siteList.RootFolder.ServerRelativeUrl.Substring(serverRelativeUrl.Length + 1)) &&
+                                                                               f.TemplateType.Equals(siteList.BaseTemplate));
                     if (index != -1)
                     {
                         baseTemplateList = creationInfo.BaseTemplate.Lists[index];
@@ -730,29 +730,29 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                 var contentTypeFields = new List<FieldRef>();
                 var list = new ListInstance
                 {
-                    Description = item.Description,
-                    EnableVersioning = item.EnableVersioning,
-                    TemplateType = item.BaseTemplate,
-                    Title = item.Title,
-                    Hidden = item.Hidden,
-                    EnableFolderCreation = item.EnableFolderCreation,
-                    DocumentTemplate = Tokenize(item.DocumentTemplateUrl, web.Url),
-                    ContentTypesEnabled = item.ContentTypesEnabled,
-                    Url = item.RootFolder.ServerRelativeUrl.Substring(serverRelativeUrl.Length).TrimStart('/'),
-                    TemplateFeatureID = item.TemplateFeatureId,
-                    EnableAttachments = item.EnableAttachments,
-                    OnQuickLaunch = item.OnQuickLaunch,
+                    Description = siteList.Description,
+                    EnableVersioning = siteList.EnableVersioning,
+                    TemplateType = siteList.BaseTemplate,
+                    Title = siteList.Title,
+                    Hidden = siteList.Hidden,
+                    EnableFolderCreation = siteList.EnableFolderCreation,
+                    DocumentTemplate = Tokenize(siteList.DocumentTemplateUrl, web.Url),
+                    ContentTypesEnabled = siteList.ContentTypesEnabled,
+                    Url = siteList.RootFolder.ServerRelativeUrl.Substring(serverRelativeUrl.Length).TrimStart('/'),
+                    TemplateFeatureID = siteList.TemplateFeatureId,
+                    EnableAttachments = siteList.EnableAttachments,
+                    OnQuickLaunch = siteList.OnQuickLaunch,
                     MaxVersionLimit =
-                        item.IsObjectPropertyInstantiated("MajorVersionLimit") ? item.MajorVersionLimit : 0,
-                    EnableMinorVersions = item.EnableMinorVersions,
+                        siteList.IsObjectPropertyInstantiated("MajorVersionLimit") ? siteList.MajorVersionLimit : 0,
+                    EnableMinorVersions = siteList.EnableMinorVersions,
                     MinorVersionLimit =
-                        item.IsObjectPropertyInstantiated("MajorWithMinorVersionsLimit")
-                            ? item.MajorWithMinorVersionsLimit
+                        siteList.IsObjectPropertyInstantiated("MajorWithMinorVersionsLimit")
+                            ? siteList.MajorWithMinorVersionsLimit
                             : 0
                 };
                 var count = 0;
 
-                foreach (var ct in item.ContentTypes)
+                foreach (var ct in siteList.ContentTypes)
                 {
                     web.Context.Load(ct, c => c.Parent);
                     web.Context.ExecuteQueryRetry();
@@ -781,21 +781,21 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                     count++;
                 }
 
-                foreach (var view in item.Views.Where(view => !view.Hidden))
+                foreach (var view in siteList.Views.Where(view => !view.Hidden))
                 {
                     list.Views.Add(new View { SchemaXml = view.ListViewXml });
                 }
 
                 var siteColumns = web.Fields;
-                web.Context.Load(siteColumns, scs => scs.Include(sc => sc.Id));
+                web.Context.Load(siteColumns, scs => scs.Include(sc => sc.Id, sc => sc.Required, sc => sc.Hidden, sc => sc.Title));
                 web.Context.ExecuteQueryRetry();
 
-                foreach (var field in item.Fields.Where(field => !field.Hidden))
+                foreach (var field in siteList.Fields.Where(field => !field.Hidden))
                 {
                     if (siteColumns.FirstOrDefault(sc => sc.Id == field.Id) != null)
                     {
                         var addField = true;
-                        if (item.ContentTypesEnabled && contentTypeFields.FirstOrDefault(c => c.Id == field.Id) == null)
+                        if (siteList.ContentTypesEnabled && contentTypeFields.FirstOrDefault(c => c.Id == field.Id) == null)
                         {
                             if (contentTypeFields.FirstOrDefault(c => c.Id == field.Id) == null)
                             {
@@ -836,7 +836,17 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                                 field.InternalName == "Preview" ||
                                 field.InternalName == "ThumbnailOnForm")
                             {
-                                addField = false;
+                                var siteColumn = siteColumns.FirstOrDefault(sc => sc.Id == field.Id);
+                                if (siteColumn.Required == field.Required &&
+                                    siteColumn.Hidden == field.Hidden &&
+                                    siteColumn.Title == field.Title)
+                                {
+                                    addField = false;
+                                }
+                                else
+                                {
+                                    addField = true;
+                                }
                             }
                         }
                         if (addField)
