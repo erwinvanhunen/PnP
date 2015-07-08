@@ -120,7 +120,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                 {
                     var fieldRef = templateContentType.FieldRefs.Find(fr => fr.Id == fieldId);
                     var field = web.Fields.GetById(fieldId);
-                    web.AddFieldToContentType(existingContentType, field, fieldRef.Required, fieldRef.Hidden);
+                    web.AddFieldToContentType(existingContentType, field, fieldRef.Required.Value, fieldRef.Hidden.Value);
                 }
             }
 
@@ -134,12 +134,12 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
                  
                     if (fieldLink.Required != fieldRef.Required)
                     {
-                        fieldLink.Required = fieldRef.Required;
+                        fieldLink.Required = fieldRef.Required.Value;
                         isDirty = true;
                     }
                     if (fieldLink.Hidden != fieldRef.Hidden)
                     {
-                        fieldLink.Hidden = fieldRef.Hidden;
+                        fieldLink.Hidden = fieldRef.Hidden.Value;
                         isDirty = true;
                     }
                 }
@@ -162,7 +162,7 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             foreach (var fieldRef in templateContentType.FieldRefs)
             {
                 var field = web.Fields.GetById(fieldRef.Id);
-                web.AddFieldToContentType(createdCT, field, fieldRef.Required, fieldRef.Hidden);
+                web.AddFieldToContentType(createdCT, field, fieldRef.Required.Value, fieldRef.Hidden.Value);
             }
 
             createdCT.ReadOnly = templateContentType.ReadOnly;

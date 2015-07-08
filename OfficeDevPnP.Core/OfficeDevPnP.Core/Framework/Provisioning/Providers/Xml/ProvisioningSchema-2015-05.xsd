@@ -936,7 +936,7 @@
       </xsd:annotation>
     </xsd:attribute>
 
-    <xsd:attribute name="Required" type="xsd:boolean" use="optional" default="false">
+    <xsd:attribute name="Required" type="xsd:boolean" use="optional">
       <xsd:annotation>
         <xsd:documentation xml:lang="en">
           The Required flag for the field to bind, optional attribute
@@ -944,7 +944,7 @@
       </xsd:annotation>
     </xsd:attribute>
 
-    <xsd:attribute name="Hidden" type="xsd:boolean" use="optional" default="false">
+    <xsd:attribute name="Hidden" type="xsd:boolean" use="optional">
       <xsd:annotation>
         <xsd:documentation xml:lang="en">
           The Hidden flag for the field to bind, optional attribute

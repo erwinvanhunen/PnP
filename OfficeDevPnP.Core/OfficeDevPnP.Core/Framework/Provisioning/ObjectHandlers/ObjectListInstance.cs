@@ -271,12 +271,12 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             }
             if (fieldRef.Hidden != listField.Hidden)
             {
-                listField.Hidden = fieldRef.Hidden;
+                listField.Hidden = fieldRef.Hidden.Value;
                 isDirty = true;
             }
             if (fieldRef.Required != listField.Required)
             {
-                listField.Required = fieldRef.Required;
+                listField.Required = fieldRef.Required.Value;
                 isDirty = true;
             }
             if (isDirty)
@@ -299,8 +299,8 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers
             {
                 createdField.Title = fieldRef.DisplayName;
             }
-            createdField.Hidden = fieldRef.Hidden;
-            createdField.Required = fieldRef.Required;
+            createdField.Hidden = fieldRef.Hidden.HasValue ? fieldRef.Hidden.Value: field.Hidden ;
+            createdField.Required = fieldRef.Required.HasValue ? fieldRef.Required.Value : field.Required;
 
             createdField.Update();
             createdField.Context.ExecuteQueryRetry();

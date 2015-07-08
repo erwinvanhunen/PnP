@@ -216,8 +216,10 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                      {
                          Name = fieldRef.Name,
                          ID = fieldRef.Id.ToString(),
-                         Hidden = fieldRef.Hidden,
-                         Required = fieldRef.Required
+                         HiddenSpecified = fieldRef.Hidden.HasValue,
+                         Hidden = fieldRef.Hidden.HasValue ? fieldRef.Hidden.Value : false,
+                         RequiredSpecified =  fieldRef.Required.HasValue,
+                         Required = fieldRef.Required.HasValue ? fieldRef.Required.Value : false,
                      }).ToArray() : null,
             }).ToArray();
 
@@ -284,8 +286,10 @@ namespace OfficeDevPnP.Core.Framework.Provisioning.Providers.Xml
                           {
                               Name = fieldRef.Name,
                               DisplayName = fieldRef.DisplayName,
-                              Hidden = fieldRef.Hidden,
-                              Required = fieldRef.Required,
+                              HiddenSpecified = fieldRef.Hidden.HasValue,
+                              Hidden = fieldRef.Hidden.HasValue ? fieldRef.Hidden.Value : false,
+                              RequiredSpecified =  fieldRef.Required.HasValue,
+                              Required = fieldRef.Required.HasValue ? fieldRef.Required.Value : false,
                               ID = fieldRef.Id.ToString(),
                           }).ToArray() : null,
                          DataRows = list.DataRows.Count > 0 ?
